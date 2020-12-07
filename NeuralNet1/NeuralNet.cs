@@ -52,7 +52,6 @@ namespace NeuralNet
                         {
                             Console.Write(val + "\t");
                         }
-
                     }
 
                     if (iter % 10 == 0 && iter != 0)
