@@ -81,8 +81,6 @@ namespace NeuralNet
                             deltaOutput[i] = (learnAnswers[learnDataCounter][i] - output[i]) * DerivedActivation(output[i]);
                         }
                         #endregion
-
-
                     }
 
                     if (iter % 10 == 0 && iter != 0)
