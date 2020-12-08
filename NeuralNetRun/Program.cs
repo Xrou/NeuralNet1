@@ -11,7 +11,7 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            Net NeuralNet = new Net(new int[] { 2, 3, 4, 2 });//предсказываем "или" и "исключающее или"
+            Net NeuralNet = new Net(new int[] { 2, 3, 1 });//предсказываем "или" и "исключающее или"
 
             foreach (float val in NeuralNet.Run(new float[] { 1, 1 }))
             {
@@ -42,11 +42,11 @@ namespace NeuralNetRun
             Console.WriteLine();
             Console.WriteLine();
 
-            NeuralNet.Train(1, 1,
+            NeuralNet.Train(1, 1, 0.001f, 0.3f,
                 new float[][] { new float[] { 1, 0 } }, //данные для обучения
                 new float[][] { new float[] { 1, 1 } }, //данные для тренировки
-                new float[][] { new float[] { 1, 1 } }, //ответы для обучения
-                new float[][] { new float[] { 0, 1 } });//ответы для тестов
+                new float[][] { new float[] { 1 } }, //ответы для обучения
+                new float[][] { new float[] { 0 } });//ответы для тестов
 
             Console.ReadLine();
         }

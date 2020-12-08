@@ -45,7 +45,7 @@ namespace NeuralNet
             OutputsCount = layersData[layersData.Length - 1];
         }
 
-        public void Train(int epochs, int iterCount, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
+        public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
         {
             for (int epoch = 0; epoch < epochs; epoch++)
             {
@@ -73,14 +73,22 @@ namespace NeuralNet
                         Error /= OutputsCount;
                         #endregion
 
-                        float[] deltaOutput = new float[OutputsCount];
+                        List<float> prevLayerDeltas = new List<float>();
 
                         #region Deltas outputs calc
                         for (int i = 0; i < OutputsCount; i++)
                         {
-                            deltaOutput[i] = (learnAnswers[learnDataCounter][i] - output[i]) * DerivedActivation(output[i]);
+                            prevLayerDeltas.Add((learnAnswers[learnDataCounter][i] - output[i]) * DerivedActivation(output[i]));
                         }
                         #endregion
+
+                        for (int layer = Weights.Count - 1; layer >= 0; layer--)//перебираем слои
+                        {
+                            for (int neuron = 0; neuron < Weights[layer].Count; neuron++)//перебираем нейроны
+                            {
+                                
+                            }
+                        }
                     }
 
                     if (iter % 10 == 0 && iter != 0)
