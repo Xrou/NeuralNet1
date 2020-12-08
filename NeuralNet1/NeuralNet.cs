@@ -18,9 +18,16 @@ namespace NeuralNet
 
         private List<List<float>> Outputs = new List<List<float>>(); // слой, номер нейрона в слое
 
-        public Net(int[] layersData) // layersData - номер слоя, кол-во нейронов в слое
+        public Net(int[] layersData) // layersData - кол-во нейронов в слое, кол-во элементов layersdata = кол-во слоев
         {
-            for (int layer = 1; layer < layersData.Length; layer++) // перебираем слои, пропускаем входной слой
+            Outputs.Add(new List<float>());
+
+            for (int i = 0; i < layersData[0]; i++) //добавляем входы как выходы
+            {
+                Outputs[0].Add(0);
+            }
+
+            for (int layer = 1; layer < layersData.Length; layer++)
             {
                 Weights.Add(new List<List<float>>());
                 WeightsDeltas.Add(new List<List<float>>());
@@ -29,20 +36,18 @@ namespace NeuralNet
 
                 for (int neuron = 0; neuron < layersData[layer]; neuron++)
                 {
-                    Weights[layer - 1].Add(new List<float>()); // добавляем нейрон
-                    WeightsDeltas[layer - 1].Add(new List<float>()); // добавляем нейрон
+                    Weights[Weights.Count - 1].Add(new List<float>());
+                    WeightsDeltas[Weights.Count - 1].Add(new List<float>());
 
-                    Outputs[layer - 1].Add(0f);
+                    Outputs[Outputs.Count - 1].Add(0f);
 
-                    for (int inputsNeuron = 0; inputsNeuron < layersData[layer - 1]; inputsNeuron++)
+                    for (int synapse = 0; synapse < layersData[layer - 1]; synapse++)
                     {
-                        Weights[layer - 1][neuron].Add(0.5f); // добавляем веса нейрону
-                        WeightsDeltas[layer - 1][neuron].Add(0.5f); // добавляем дельты веса нейрону
+                        Weights[Weights.Count - 1][neuron].Add(0.5f);
+                        WeightsDeltas[WeightsDeltas.Count - 1][neuron].Add(0.5f);
                     }
                 }
             }
-
-            OutputsCount = layersData[layersData.Length - 1];
         }
 
         public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
@@ -53,42 +58,7 @@ namespace NeuralNet
                 {
                     for (int learnDataCounter = 0; learnDataCounter < learnData.Length; learnDataCounter++)
                     {
-                        float[] output = Run(learnData[learnDataCounter]);
 
-                        #region print
-                        foreach (float val in output)
-                        {
-                            Console.Write(val + "\t");
-                        }
-                        #endregion
-
-                        float Error = 0; //MSE error
-
-                        #region MSE calc
-                        for (int i = 0; i < OutputsCount; i++)
-                        {
-                            Error = output[i] - learnAnswers[learnDataCounter][i];
-                        }
-
-                        Error /= OutputsCount;
-                        #endregion
-
-                        List<float> prevLayerDeltas = new List<float>();
-
-                        #region Deltas outputs calc
-                        for (int i = 0; i < OutputsCount; i++)
-                        {
-                            prevLayerDeltas.Add((learnAnswers[learnDataCounter][i] - output[i]) * DerivedActivation(output[i]));
-                        }
-                        #endregion
-
-                        for (int layer = Weights.Count - 1; layer >= 0; layer--)//перебираем слои
-                        {
-                            for (int neuron = 0; neuron < Weights[layer].Count; neuron++)//перебираем нейроны
-                            {
-                                
-                            }
-                        }
                     }
 
                     if (iter % 10 == 0 && iter != 0)
@@ -103,38 +73,34 @@ namespace NeuralNet
 
         public float[] Run(float[] inputs)
         {
-            for (int i = 0; i < Outputs.Count; i++)
+            if (inputs.Length != Outputs[0].Count) //сравниваем кол-во нейронов на входе и кол-во входов
             {
-                for (int k = 0; k < Outputs[i].Count; k++) // чистим от предыдущих подсчетов
+                Console.WriteLine($"Run: неправильное количество входов. Необходимо: {Weights[0].Count}, получено: {inputs.Length}");
+                return null;
+            }
+
+            for (int i = 1; i < Outputs.Count; i++) // чистим выходы от предыдущих данных
+            {
+                for (int k = 0; k < Outputs[i].Count; k++)
                 {
                     Outputs[i][k] = 0;
                 }
             }
 
-            for (int i = 0; i < Weights[0].Count; i++)
+            for (int i = 0; i < inputs.Length; i++)
             {
-                for (int k = 0; k < Weights[0][i].Count; k++)
-                {
-                    Outputs[0][i] += inputs[k] * Weights[0][i][k];
-                }
-
-                Outputs[0][i] = Activation(Outputs[0][i]);
+                Outputs[0][i] = inputs[i]; //присваиваем входам значения входов
             }
 
-            for (int i = 1; i < Weights.Count; i++)
+            for (int layer = 0; layer < Weights.Count; layer++) // перебор слоёв
             {
-                for (int k = 0; k < Weights[i].Count; k++)
+                for (int neuron = 0; neuron < Weights[layer].Count; neuron++)
                 {
-                    for (int j = 0; j < Weights[i - 1].Count; j++)
-                    {
-                        Outputs[i][k] += Outputs[i - 1][j] * Weights[i][k][j];
-                    }
 
-                    Outputs[i][k] = Activation(Outputs[i][k]);
                 }
             }
 
-            return Outputs[Outputs.Count - 1].ToArray(); //возвращаем выходы из сети
+            return new float[0];
         }
 
         private float Activation(float x)
