@@ -58,6 +58,19 @@ namespace NeuralNet
                 {
                     for (int learnDataCounter = 0; learnDataCounter < learnData.Length; learnDataCounter++)
                     {
+                        float[] NNOut = Run(learnData[learnDataCounter]); // получаем выходы нс 
+
+                        float MSE = 0;
+                        List<float> deltas = new List<float>();
+
+                        for (int i = 0; i < NNOut.Length; i++)
+                        {
+                            MSE += (float)Math.Pow(learnAnswers[learnDataCounter][i] - NNOut[i], 2);
+                            deltas.Add((learnAnswers[learnDataCounter][i] - NNOut[i]) * DerivedActivation(NNOut[i]));
+                        }
+
+                        MSE = MSE / NNOut.Length;
+
 
                     }
 
@@ -96,11 +109,16 @@ namespace NeuralNet
             {
                 for (int neuron = 0; neuron < Weights[layer].Count; neuron++)
                 {
+                    for (int synapse = 0; synapse < Weights[layer][neuron].Count; synapse++)
+                    {
+                        Outputs[layer + 1][neuron] += Outputs[layer][synapse] * Weights[layer][neuron][synapse];
+                    }
 
+                    Outputs[layer + 1][neuron] = Activation(Outputs[layer + 1][neuron]);
                 }
             }
 
-            return new float[0];
+            return Outputs[Outputs.Count - 1].ToArray();
         }
 
         private float Activation(float x)
