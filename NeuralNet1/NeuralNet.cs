@@ -51,11 +51,11 @@ namespace NeuralNet
 
         public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
         {
-            List<List<float>> deltas = new List<List<float>>();
+            List<List<float>> deltas = new List<List<float>>(); // создаем листы для хранения дельт
 
             for (int i = 0; i < Outputs.Count; i++)
             {
-                deltas.Add(new List<float>());
+                deltas.Add(new List<float>()); // добавляем ячейки для вычислений, так же как в листы output
 
                 for (int k = 0; k < Outputs[i].Count; k++)
                 {
@@ -75,11 +75,11 @@ namespace NeuralNet
 
                         for (int i = 0; i < NNOut.Length; i++)
                         {
-                            MSE += (float)Math.Pow(learnAnswers[learnDataCounter][i] - NNOut[i], 2);
-                            deltas[deltas.Count - 1][i] = (learnAnswers[learnDataCounter][i] - NNOut[i]) * DerivedActivation(NNOut[i]);
+                            MSE += (float)Math.Pow(learnAnswers[learnDataCounter][i] - NNOut[i], 2); //подсчитываем сумму ошибок
+                            deltas[deltas.Count - 1][i] = (learnAnswers[learnDataCounter][i] - NNOut[i]) * DerivedActivation(NNOut[i]);//параллельно считаем дельты выходных нейронов
                         }
 
-                        MSE = MSE / NNOut.Length;
+                        MSE = MSE / NNOut.Length; // делим
 
                         for (int layer = Weights.Count - 1; layer >= 0; layer--)
                         {
@@ -87,13 +87,12 @@ namespace NeuralNet
                             {
                                 for (int synapse = 0; synapse < Outputs[layer + 1].Count; synapse++)
                                 {
-                                    deltas[layer][neuron] = deltas[layer + 1][synapse] * Weights[layer][synapse][neuron];
+                                    deltas[layer][neuron] = deltas[layer + 1][synapse] * Weights[layer][synapse][neuron]; // суммируем
                                 }
 
-                                deltas[layer][neuron] *= DerivedActivation(Outputs[layer][neuron]);
+                                deltas[layer][neuron] *= DerivedActivation(Outputs[layer][neuron]); // домножаем на производную
                             }
                         }
-
 
                         for (int layer = Weights.Count - 1; layer >= 0; layer--)
                         {
@@ -102,13 +101,19 @@ namespace NeuralNet
                                 for (int synapse = 0; synapse < Outputs[layer + 1].Count; synapse++)
                                 {
                                     float deltaW = Outputs[layer][neuron] * deltas[layer + 1][synapse];
-                                    deltaW = LearningRate * deltaW + Moment * WeightsDeltas[layer][synapse][neuron];
+                                    deltaW = LearningRate * deltaW + Moment * WeightsDeltas[layer][synapse][neuron]; // тут сложно см ниже
 
                                     Weights[layer][synapse][neuron] += deltaW;
                                     WeightsDeltas[layer][synapse][neuron] = deltaW;
                                 }
                             }
                         }
+
+                        /*
+                        суть подсчета дельт такая:
+                        т.к. у нас слоев весов 2(см. 1.jpg), а выходов и дельт всегда на 1 слой больше, так еще и веса у нас на выход, то
+                        получается не очень удобно считать дельты. Поэтому я в перебираю не синапсы от нейрона, а нейроны, а нейроны от нейрона(2.jpg)
+                         */
                     }
 
                     if (iter % 10 == 0 && iter != 0)
