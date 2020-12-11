@@ -10,8 +10,6 @@ namespace NeuralNet
     {
         private const float E = 2.7182818285f;
 
-        private int OutputsCount;
-
         // веса на вход нейрона
         private List<List<List<float>>> Weights = new List<List<List<float>>>(); // слой, номер нейрона в слое, номер связи
         private List<List<List<float>>> WeightsDeltas = new List<List<List<float>>>(); // слой, номер нейрона в слое, номер связи
@@ -20,6 +18,7 @@ namespace NeuralNet
 
         public Net(int[] layersData) // layersData - кол-во нейронов в слое, кол-во элементов layersdata = кол-во слоев
         {
+            Random rnd = new Random();
             Outputs.Add(new List<float>());
 
             for (int i = 0; i < layersData[0]; i++) //добавляем входы как выходы
@@ -43,8 +42,8 @@ namespace NeuralNet
 
                     for (int synapse = 0; synapse < layersData[layer - 1]; synapse++)
                     {
-                        Weights[Weights.Count - 1][neuron].Add(0.5f);
-                        WeightsDeltas[WeightsDeltas.Count - 1][neuron].Add(0.5f);
+                        Weights[Weights.Count - 1][neuron].Add(rnd.Next(-1, 1));
+                        WeightsDeltas[WeightsDeltas.Count - 1][neuron].Add(0f);
                     }
                 }
             }
@@ -52,6 +51,18 @@ namespace NeuralNet
 
         public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
         {
+            List<List<float>> deltas = new List<List<float>>();
+
+            for (int i = 0; i < Outputs.Count; i++)
+            {
+                deltas.Add(new List<float>());
+
+                for (int k = 0; k < Outputs[i].Count; k++)
+                {
+                    deltas[i].Add(0f);
+                }
+            }
+
             for (int epoch = 0; epoch < epochs; epoch++)
             {
                 for (int iter = 0; iter < iterCount; iter++)
@@ -61,24 +72,50 @@ namespace NeuralNet
                         float[] NNOut = Run(learnData[learnDataCounter]); // получаем выходы нс 
 
                         float MSE = 0;
-                        List<float> deltas = new List<float>();
 
                         for (int i = 0; i < NNOut.Length; i++)
                         {
                             MSE += (float)Math.Pow(learnAnswers[learnDataCounter][i] - NNOut[i], 2);
-                            deltas.Add((learnAnswers[learnDataCounter][i] - NNOut[i]) * DerivedActivation(NNOut[i]));
+                            deltas[deltas.Count - 1][i] = (learnAnswers[learnDataCounter][i] - NNOut[i]) * DerivedActivation(NNOut[i]);
                         }
 
                         MSE = MSE / NNOut.Length;
 
+                        for (int layer = Weights.Count - 1; layer >= 0; layer--)
+                        {
+                            for (int neuron = 0; neuron < Outputs[layer].Count; neuron++)
+                            {
+                                for (int synapse = 0; synapse < Outputs[layer + 1].Count; synapse++)
+                                {
+                                    deltas[layer][neuron] = deltas[layer + 1][synapse] * Weights[layer][synapse][neuron];
+                                }
 
+                                deltas[layer][neuron] *= DerivedActivation(Outputs[layer][neuron]);
+                            }
+                        }
+
+
+                        for (int layer = Weights.Count - 1; layer >= 0; layer--)
+                        {
+                            for (int neuron = 0; neuron < Outputs[layer].Count; neuron++)
+                            {
+                                for (int synapse = 0; synapse < Outputs[layer + 1].Count; synapse++)
+                                {
+                                    float deltaW = Outputs[layer][neuron] * deltas[layer + 1][synapse];
+                                    deltaW = LearningRate * deltaW + Moment * WeightsDeltas[layer][synapse][neuron];
+
+                                    Weights[layer][synapse][neuron] += deltaW;
+                                    WeightsDeltas[layer][synapse][neuron] = deltaW;
+                                }
+                            }
+                        }
                     }
 
                     if (iter % 10 == 0 && iter != 0)
                     {
                         //тест
 
-                        Console.WriteLine($"Epoch: {epoch + 1} Iteration: {iter} Test accuracy: acc");
+                        Console.WriteLine($"Epoch: {epoch + 1} Iteration: {iter} Last error: MSE");
                     }
                 }
             }
