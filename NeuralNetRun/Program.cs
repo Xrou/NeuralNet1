@@ -12,12 +12,13 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            Net NeuralNet = new Net(new int[] { 2, 3, 3, 1 });//предсказываем "или"
-
+            Net NeuralNet = new Net(new int[] { 2, 5, 3, 2 });//предсказываем "или" и "и"
+            bool weightsLoaded = false;
             Console.WriteLine("Read prev weights?(y, n)");
 
             if (Console.ReadLine() == "y")
             {
+                weightsLoaded = true;
                 NeuralNet.ReadWeights("Weights.xml");
             }
             else
@@ -65,16 +66,16 @@ namespace NeuralNetRun
                     new float[] { 1, 1 }}, //данные для тренировки
 
                     new float[][] {
-                    new float[] { 1 },
-                    new float[] { 1 },
-                    new float[] { 1 },
-                    new float[] { 0 } }, //ответы для обучения
+                    new float[] { 1, 1 },
+                    new float[] { 1, 0 },
+                    new float[] { 1, 0 },
+                    new float[] { 0, 0 } }, //ответы для обучения
 
                     new float[][] {
-                    new float[] { 1 },
-                    new float[] { 1 },
-                    new float[] { 0 },
-                    new float[] { 1 } });//ответы для тестов
+                    new float[] { 1, 0 },
+                    new float[] { 1, 0 },
+                    new float[] { 0, 0 },
+                    new float[] { 1, 1 } });//ответы для тестов
 
                 Console.WriteLine("| ANSWERS AFTER TRAIN");
                 Console.WriteLine("\\/");
@@ -104,11 +105,15 @@ namespace NeuralNetRun
             }
 
             Console.WriteLine();
-            Console.WriteLine("Save weights?(y, n)");
-
-            if (Console.ReadLine() == "y")
+            
+            if (!weightsLoaded)
             {
-                NeuralNet.SaveWeights("Weights.xml");
+                Console.WriteLine("Save weights?(y, n)");
+
+                if (Console.ReadLine() == "y")
+                {
+                    NeuralNet.SaveWeights("Weights.xml");
+                }
             }
 
             Console.ReadLine();
