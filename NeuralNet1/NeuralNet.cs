@@ -67,6 +67,8 @@ namespace NeuralNet
                 }
             }
 
+            StreamWriter logger = new StreamWriter("Train log.txt", false);
+
             for (int epoch = 0; epoch < epochs; epoch++)
             {
                 for (int iter = 0; iter < iterCount; iter++)
@@ -75,15 +77,10 @@ namespace NeuralNet
                     {
                         float[] NNOut = Run(learnData[learnDataCounter]); // получаем выходы нс 
 
-                        float MSE = 0;
-
                         for (int i = 0; i < NNOut.Length; i++)
                         {
-                            MSE += (float)Math.Pow(learnAnswers[learnDataCounter][i] - NNOut[i], 2); //подсчитываем сумму ошибок
                             deltas[deltas.Count - 1][i] = (learnAnswers[learnDataCounter][i] - NNOut[i]) * DerivedActivation(NNOut[i]);//параллельно считаем дельты выходных нейронов
                         }
-
-                        MSE = MSE / NNOut.Length; // делим
 
                         for (int layer = Weights.Count - 1; layer >= 0; layer--)
                         {
@@ -125,9 +122,28 @@ namespace NeuralNet
 
                     if (iter % 10 == 0 && iter != 0)
                     {
-                        //тест
+                        float TotalMse = 0;
 
-                        Console.WriteLine($"Epoch: {epoch + 1} Iteration: {iter} Last error: MSE");
+                        for (int testDataCounter = 0; testDataCounter < testData.Length; testDataCounter++)
+                        {
+                            float[] NNOut = Run(testData[testDataCounter]); // получаем выходы нс 
+
+                            float MSE = 0;
+
+                            for (int i = 0; i < NNOut.Length; i++)
+                            {
+                                MSE += (float)Math.Pow(testAnswers[testDataCounter][i] - NNOut[i], 2); //подсчитываем сумму ошибок
+                            }
+
+                            MSE = MSE / NNOut.Length; // делим
+                            TotalMse += MSE;
+                        }
+
+                        TotalMse /= testData.Length;
+
+                        logger.WriteLine(TotalMse.ToString());
+
+                        Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter}\t Avg test error: {TotalMse}");
                     }
                 }
             }
@@ -186,7 +202,7 @@ namespace NeuralNet
 
             using (FileStream fs = new FileStream(fn, FileMode.Open))
             {
-               Weights = (List<List<List<float>>>)xmlSerializer.Deserialize(fs);
+                Weights = (List<List<List<float>>>)xmlSerializer.Deserialize(fs);
             }
 
         }

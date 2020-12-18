@@ -57,13 +57,24 @@ namespace NeuralNetRun
                     new float[] { 0, 1 },
                     new float[] { 1, 0 },
                     new float[] { 0, 0 }}, //данные для обучения
-                    new float[][] { new float[] { 1, 1 } }, //данные для тренировки
+
+                    new float[][] {
+                    new float[] { 1, 0 },
+                    new float[] { 0, 1 },
+                    new float[] { 0, 0 },
+                    new float[] { 1, 1 }}, //данные для тренировки
+
                     new float[][] {
                     new float[] { 1 },
                     new float[] { 1 },
                     new float[] { 1 },
                     new float[] { 0 } }, //ответы для обучения
-                    new float[][] { new float[] { 1 } });//ответы для тестов
+
+                    new float[][] {
+                    new float[] { 1 },
+                    new float[] { 1 },
+                    new float[] { 0 },
+                    new float[] { 1 } });//ответы для тестов
 
                 Console.WriteLine("| ANSWERS AFTER TRAIN");
                 Console.WriteLine("\\/");
