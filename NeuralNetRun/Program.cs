@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,53 +12,62 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            Net NeuralNet = new Net(new int[] { 2, 3, 1 });//предсказываем "или"
+            Net NeuralNet = new Net(new int[] { 2, 3, 3, 1 });//предсказываем "или"
 
-            foreach (float val in NeuralNet.Run(new float[] { 1, 1 }))
+            Console.WriteLine("Read prev weights?(y, n)");
+
+            if (Console.ReadLine() == "y")
             {
-                Console.Write(val + "\t");
+                NeuralNet.ReadWeights("Weights.xml");
             }
-
-            Console.WriteLine();
-
-            foreach (float val in NeuralNet.Run(new float[] { 1, 0 }))
+            else
             {
-                Console.Write(val + "\t");
-            }
+                foreach (float val in NeuralNet.Run(new float[] { 1, 1 }))
+                {
+                    Console.Write(val + "\t");
+                }
 
-            Console.WriteLine();
+                Console.WriteLine();
 
-            foreach (float val in NeuralNet.Run(new float[] { 0, 1 }))
-            {
-                Console.Write(val + "\t");
-            }
+                foreach (float val in NeuralNet.Run(new float[] { 1, 0 }))
+                {
+                    Console.Write(val + "\t");
+                }
 
-            Console.WriteLine();
+                Console.WriteLine();
 
-            foreach (float val in NeuralNet.Run(new float[] { 0, 0 }))
-            {
-                Console.Write(val + "\t");
-            }
+                foreach (float val in NeuralNet.Run(new float[] { 0, 1 }))
+                {
+                    Console.Write(val + "\t");
+                }
 
-            Console.WriteLine("\n^ ANSWERS BEFORE TRAIN");
-            Console.WriteLine("|");
+                Console.WriteLine();
 
-            NeuralNet.Train(3, 10, 0.1f, 0.3f,
-                new float[][] {
+                foreach (float val in NeuralNet.Run(new float[] { 0, 0 }))
+                {
+                    Console.Write(val + "\t");
+                }
+
+                Console.WriteLine("\n^ ANSWERS BEFORE TRAIN");
+                Console.WriteLine("|");
+
+                NeuralNet.Train(30, 1000, 0.1f, 0.3f,
+                    new float[][] {
                     new float[] { 1, 1 },
                     new float[] { 0, 1 },
                     new float[] { 1, 0 },
                     new float[] { 0, 0 }}, //данные для обучения
-                new float[][] { new float[] { 1, 1 } }, //данные для тренировки
-                new float[][] {
+                    new float[][] { new float[] { 1, 1 } }, //данные для тренировки
+                    new float[][] {
                     new float[] { 1 },
                     new float[] { 1 },
                     new float[] { 1 },
                     new float[] { 0 } }, //ответы для обучения
-                new float[][] { new float[] { 1 } });//ответы для тестов
+                    new float[][] { new float[] { 1 } });//ответы для тестов
 
-            Console.WriteLine("| ANSWERS AFTER TRAIN");
-            Console.WriteLine("\\/");
+                Console.WriteLine("| ANSWERS AFTER TRAIN");
+                Console.WriteLine("\\/");
+            }
 
             foreach (float val in NeuralNet.Run(new float[] { 0, 0 }))
             {
@@ -82,6 +92,13 @@ namespace NeuralNetRun
                 Console.Write(val + "\t");
             }
 
+            Console.WriteLine();
+            Console.WriteLine("Save weights?(y, n)");
+
+            if (Console.ReadLine() == "y")
+            {
+                NeuralNet.SaveWeights("Weights.xml");
+            }
 
             Console.ReadLine();
         }

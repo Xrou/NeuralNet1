@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Xml;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
+using System.IO;
 
 namespace NeuralNet
 {
@@ -11,7 +14,8 @@ namespace NeuralNet
         private const float E = 2.7182818285f;
 
         // веса на вход нейрона
-        private List<List<List<float>>> Weights = new List<List<List<float>>>(); // слой, номер нейрона в слое, номер связи
+        [System.Xml.Serialization.XmlElement("Weights")]
+        public List<List<List<float>>> Weights = new List<List<List<float>>>(); // слой, номер нейрона в слое, номер связи
         private List<List<List<float>>> WeightsDeltas = new List<List<List<float>>>(); // слой, номер нейрона в слое, номер связи
 
         private List<List<float>> Outputs = new List<List<float>>(); // слой, номер нейрона в слое
@@ -164,6 +168,27 @@ namespace NeuralNet
             }
 
             return Outputs[Outputs.Count - 1].ToArray();
+        }
+
+        public void SaveWeights(string fn)
+        {
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<List<List<float>>>));
+
+            using (FileStream fs = new FileStream(fn, FileMode.Create))
+            {
+                xmlSerializer.Serialize(fs, Weights);
+            }
+        }
+
+        public void ReadWeights(string fn)
+        {
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<List<List<float>>>));
+
+            using (FileStream fs = new FileStream(fn, FileMode.Open))
+            {
+               Weights = (List<List<List<float>>>)xmlSerializer.Deserialize(fs);
+            }
+
         }
 
         private float Activation(float x)
