@@ -9,20 +9,22 @@ using System.IO;
 
 namespace NeuralNet
 {
-    public class Net
+    public class FeedForwardNN
     {
+        private Random random;
+
         private const float E = 2.7182818285f;
 
         // веса на вход нейрона
         [System.Xml.Serialization.XmlElement("Weights")]
-        public List<List<List<float>>> Weights = new List<List<List<float>>>(); // слой, номер нейрона в слое, номер связи
+        private List<List<List<float>>> Weights = new List<List<List<float>>>(); // слой, номер нейрона в слое, номер связи
         private List<List<List<float>>> WeightsDeltas = new List<List<List<float>>>(); // слой, номер нейрона в слое, номер связи
 
         private List<List<float>> Outputs = new List<List<float>>(); // слой, номер нейрона в слое
 
-        public Net(int[] layersData) // layersData - кол-во нейронов в слое, кол-во элементов layersdata = кол-во слоев
+        public FeedForwardNN(int[] layersData) // layersData - кол-во нейронов в слое, кол-во элементов layersdata = кол-во слоев
         {
-            Random rnd = new Random();
+            random = new Random();
             Outputs.Add(new List<float>());
 
             for (int i = 0; i < layersData[0]; i++) //добавляем входы как выходы
@@ -46,15 +48,25 @@ namespace NeuralNet
 
                     for (int synapse = 0; synapse < layersData[layer - 1]; synapse++)
                     {
-                        Weights[Weights.Count - 1][neuron].Add(rnd.Next(-1, 1));
+                        Weights[Weights.Count - 1][neuron].Add(random.Next(-1, 1));
                         WeightsDeltas[WeightsDeltas.Count - 1][neuron].Add(0f);
                     }
                 }
             }
         }
 
-        public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
+        public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float[] DOScheme = null, float accuracyChangeLimit = -1) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
         {
+            if (DOScheme != null)
+            {
+                if (DOScheme.Length + 2 != Outputs.Count)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Incorrect dropout scheme");
+                    Console.ForegroundColor = ConsoleColor.White;
+                }
+            }
+
             List<List<float>> deltas = new List<List<float>>(); // создаем листы для хранения дельт
 
             for (int i = 0; i < Outputs.Count; i++)
@@ -68,6 +80,7 @@ namespace NeuralNet
             }
 
             StreamWriter logger = new StreamWriter("Train log.txt", false);
+            float prevTestMSE = 0;
 
             for (int epoch = 0; epoch < epochs; epoch++)
             {
@@ -75,7 +88,7 @@ namespace NeuralNet
                 {
                     for (int learnDataCounter = 0; learnDataCounter < learnData.Length; learnDataCounter++)
                     {
-                        float[] NNOut = Run(learnData[learnDataCounter]); // получаем выходы нс 
+                        float[] NNOut = RunDropOut(learnData[learnDataCounter], DOScheme); // получаем выходы нс 
 
                         for (int i = 0; i < NNOut.Length; i++)
                         {
@@ -144,6 +157,16 @@ namespace NeuralNet
                         logger.WriteLine(TotalMse.ToString());
 
                         Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter}\t Avg test error: {TotalMse}");
+
+                        if (Math.Abs(prevTestMSE - TotalMse) < accuracyChangeLimit)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("Accuracy limit!");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            return;
+                        }
+
+                        prevTestMSE = TotalMse;
                     }
                 }
             }
@@ -180,6 +203,54 @@ namespace NeuralNet
                     }
 
                     Outputs[layer + 1][neuron] = Activation(Outputs[layer + 1][neuron]);
+                }
+            }
+
+            return Outputs[Outputs.Count - 1].ToArray();
+        }
+
+        public float[] RunDropOut(float[] inputs, float[] DropOutScheme)
+        {
+            if (inputs.Length != Outputs[0].Count) //сравниваем кол-во нейронов на входе и кол-во входов
+            {
+                Console.WriteLine($"Run: неправильное количество входов. Необходимо: {Weights[0].Count}, получено: {inputs.Length}");
+                return null;
+            }
+
+            for (int i = 1; i < Outputs.Count; i++) // чистим выходы от предыдущих данных
+            {
+                for (int k = 0; k < Outputs[i].Count; k++)
+                {
+                    Outputs[i][k] = 0;
+                }
+            }
+
+            for (int i = 0; i < inputs.Length; i++)
+            {
+                Outputs[0][i] = inputs[i]; //присваиваем входам значения входов
+            }
+
+            for (int layer = 0; layer < Weights.Count; layer++) // перебор слоёв
+            {
+                for (int neuron = 0; neuron < Weights[layer].Count; neuron++)
+                {
+                    for (int synapse = 0; synapse < Weights[layer][neuron].Count; synapse++)
+                    {
+                        Outputs[layer + 1][neuron] += Outputs[layer][synapse] * Weights[layer][neuron][synapse];
+                    }
+
+                    Outputs[layer + 1][neuron] = Activation(Outputs[layer + 1][neuron]);
+                }
+            }
+
+            for (int i = 0; i < DropOutScheme.Length; i++)
+            {
+                for (int k = 0; k < Outputs[i + 1].Count; k++)
+                {
+                    if (random.NextDouble() < DropOutScheme[i])
+                    {
+                        Outputs[i + 1][k] = 0;
+                    }
                 }
             }
 

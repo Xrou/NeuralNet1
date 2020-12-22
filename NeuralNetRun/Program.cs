@@ -12,7 +12,7 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            Net NeuralNet = new Net(new int[] { 2, 5, 3, 2 });//предсказываем "или" и "и"
+            FeedForwardNN NeuralNet = new FeedForwardNN(new int[] { 2, 5, 3, 2 });//предсказываем "или" и "и"
             bool weightsLoaded = false;
             Console.WriteLine("Read prev weights?(y, n)");
 
@@ -52,7 +52,7 @@ namespace NeuralNetRun
                 Console.WriteLine("\n^ ANSWERS BEFORE TRAIN");
                 Console.WriteLine("|");
 
-                NeuralNet.Train(30, 1000, 0.1f, 0.3f,
+                NeuralNet.Train(130, 1000, 0.01f, 0.3f,
                     new float[][] {
                     new float[] { 1, 1 },
                     new float[] { 0, 1 },
@@ -75,7 +75,9 @@ namespace NeuralNetRun
                     new float[] { 1, 0 },
                     new float[] { 1, 0 },
                     new float[] { 0, 0 },
-                    new float[] { 1, 1 } });//ответы для тестов
+                    new float[] { 1, 1 } }, //ответы для тестов
+
+                    new float[]{ 0.25f, 0.1f });//схема дропаута 
 
                 Console.WriteLine("| ANSWERS AFTER TRAIN");
                 Console.WriteLine("\\/");
