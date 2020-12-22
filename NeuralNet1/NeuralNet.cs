@@ -12,8 +12,11 @@ namespace NeuralNet
     public class FeedForwardNN
     {
         private Random random;
+        public delegate float Activation(float x);
+        public delegate float DerivedActivation(float x);
 
-        private const float E = 2.7182818285f;
+        Activation activation;
+        DerivedActivation derivedActivation;
 
         // веса на вход нейрона
         [System.Xml.Serialization.XmlElement("Weights")]
@@ -22,10 +25,13 @@ namespace NeuralNet
 
         private List<List<float>> Outputs = new List<List<float>>(); // слой, номер нейрона в слое
 
-        public FeedForwardNN(int[] layersData) // layersData - кол-во нейронов в слое, кол-во элементов layersdata = кол-во слоев
+        public FeedForwardNN(int[] layersData, Activation activation, DerivedActivation derivedActivation) // layersData - кол-во нейронов в слое, кол-во элементов layersdata = кол-во слоев
         {
             random = new Random();
             Outputs.Add(new List<float>());
+
+            this.activation = activation;
+            this.derivedActivation = derivedActivation;
 
             for (int i = 0; i < layersData[0]; i++) //добавляем входы как выходы
             {
@@ -55,7 +61,7 @@ namespace NeuralNet
             }
         }
 
-        public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float[] DOScheme = null, float accuracyChangeLimit = -1) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
+        public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float[] DOScheme = null, float accuracyChangeLimit = -1, bool logging = true) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
         {
             if (DOScheme != null)
             {
@@ -92,7 +98,7 @@ namespace NeuralNet
 
                         for (int i = 0; i < NNOut.Length; i++)
                         {
-                            deltas[deltas.Count - 1][i] = (learnAnswers[learnDataCounter][i] - NNOut[i]) * DerivedActivation(NNOut[i]);//параллельно считаем дельты выходных нейронов
+                            deltas[deltas.Count - 1][i] = (learnAnswers[learnDataCounter][i] - NNOut[i]) * derivedActivation(NNOut[i]);//параллельно считаем дельты выходных нейронов
                         }
 
                         for (int layer = Weights.Count - 1; layer >= 0; layer--)
@@ -104,7 +110,7 @@ namespace NeuralNet
                                     deltas[layer][neuron] = deltas[layer + 1][synapse] * Weights[layer][synapse][neuron]; // суммируем
                                 }
 
-                                deltas[layer][neuron] *= DerivedActivation(Outputs[layer][neuron]); // домножаем на производную
+                                deltas[layer][neuron] *= derivedActivation(Outputs[layer][neuron]); // домножаем на производную
                             }
                         }
 
@@ -154,9 +160,12 @@ namespace NeuralNet
 
                         TotalMse /= testData.Length;
 
-                        logger.WriteLine(TotalMse.ToString());
+                        if (logging)
+                        {
+                            logger.WriteLine(TotalMse.ToString());
 
-                        Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter}\t Avg test error: {TotalMse}");
+                            Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter}\t Avg test error: {TotalMse}");
+                        }
 
                         if (Math.Abs(prevTestMSE - TotalMse) < accuracyChangeLimit)
                         {
@@ -202,7 +211,7 @@ namespace NeuralNet
                         Outputs[layer + 1][neuron] += Outputs[layer][synapse] * Weights[layer][neuron][synapse];
                     }
 
-                    Outputs[layer + 1][neuron] = Activation(Outputs[layer + 1][neuron]);
+                    Outputs[layer + 1][neuron] = activation(Outputs[layer + 1][neuron]);
                 }
             }
 
@@ -239,7 +248,7 @@ namespace NeuralNet
                         Outputs[layer + 1][neuron] += Outputs[layer][synapse] * Weights[layer][neuron][synapse];
                     }
 
-                    Outputs[layer + 1][neuron] = Activation(Outputs[layer + 1][neuron]);
+                    Outputs[layer + 1][neuron] = activation(Outputs[layer + 1][neuron]);
                 }
             }
 
@@ -276,16 +285,6 @@ namespace NeuralNet
                 Weights = (List<List<List<float>>>)xmlSerializer.Deserialize(fs);
             }
 
-        }
-
-        private float Activation(float x)
-        {
-            return (float)(1 / (1 + Math.Pow(E, -x)));
-        }
-
-        private float DerivedActivation(float x)
-        {
-            return (1 - x) * x;
         }
     }
 }

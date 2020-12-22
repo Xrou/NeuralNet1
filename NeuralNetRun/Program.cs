@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using NeuralNet;
 
@@ -12,7 +13,7 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            FeedForwardNN NeuralNet = new FeedForwardNN(new int[] { 2, 5, 3, 2 });//предсказываем "или" и "и"
+            FeedForwardNN NeuralNet = new FeedForwardNN(new int[] { 2, 5, 3, 2 }, Activation.Sigmoid, Activation.DerivedSigmoid);//предсказываем "или" и "и"
             bool weightsLoaded = false;
             Console.WriteLine("Read prev weights?(y, n)");
 
@@ -20,6 +21,12 @@ namespace NeuralNetRun
             {
                 weightsLoaded = true;
                 NeuralNet.ReadWeights("Weights.xml");
+
+                Thread thread1 = new Thread(new ThreadStart(calc));
+
+                thread1.Priority = ThreadPriority.Highest;
+
+                thread1.Start();
             }
             else
             {
@@ -52,6 +59,10 @@ namespace NeuralNetRun
                 Console.WriteLine("\n^ ANSWERS BEFORE TRAIN");
                 Console.WriteLine("|");
 
+                Stopwatch stopwatch = new Stopwatch();
+
+                stopwatch.Start();
+
                 NeuralNet.Train(130, 1000, 0.01f, 0.3f,
                     new float[][] {
                     new float[] { 1, 1 },
@@ -77,7 +88,10 @@ namespace NeuralNetRun
                     new float[] { 0, 0 },
                     new float[] { 1, 1 } }, //ответы для тестов
 
-                    new float[]{ 0.25f, 0.1f });//схема дропаута 
+                    new float[] { 0.25f, 0.1f }, logging:true);//схема дропаута 
+
+                stopwatch.Stop();
+                Console.WriteLine($"Elapsed time:{stopwatch.ElapsedMilliseconds}");
 
                 Console.WriteLine("| ANSWERS AFTER TRAIN");
                 Console.WriteLine("\\/");
@@ -107,7 +121,7 @@ namespace NeuralNetRun
             }
 
             Console.WriteLine();
-            
+
             if (!weightsLoaded)
             {
                 Console.WriteLine("Save weights?(y, n)");
@@ -119,6 +133,16 @@ namespace NeuralNetRun
             }
 
             Console.ReadLine();
+        }
+
+        static void calc()
+        {
+            double sum = 0;
+
+            for (int i = 0; i < 999999999; i++)
+            {
+                sum += (i * i);
+            }
         }
     }
 }
