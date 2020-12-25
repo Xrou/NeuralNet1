@@ -57,7 +57,7 @@ namespace NeuralNetRun
 
             FeedForwardNN nn = new FeedForwardNN(new int[] { 1, 3, 2, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
 
-            nn.Train(5, 1000, 0.1f, 0.3f,
+            nn.Train(15, 1000, 0.01f, 0.3f,
                 learningData, testData,
                 learningAnswers, testAnswers);
 
