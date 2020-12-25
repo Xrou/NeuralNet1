@@ -13,136 +13,60 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            FeedForwardNN NeuralNet = new FeedForwardNN(new int[] { 2, 5, 3, 2 }, Activation.Sigmoid, Activation.DerivedSigmoid);//предсказываем "или" и "и"
-            bool weightsLoaded = false;
-            Console.WriteLine("Read prev weights?(y, n)");
+            Random rnd = new Random();
 
-            if (Console.ReadLine() == "y")
+            float[][] learningData = new float[200][];
+            float[][] learningAnswers = new float[200][];
+
+            float[][] testData = new float[20][];
+            float[][] testAnswers = new float[20][];
+
+            float lrMin = 100;
+            float lrMax = 0;
+
+            for (int i = 0; i < learningData.Length; i++)
             {
-                weightsLoaded = true;
-                NeuralNet.ReadWeights("Weights.xml");
+                float var = rnd.Next(10, 81);
 
-                Thread thread1 = new Thread(new ThreadStart(calc));
+                learningData[i] = new float[] { var };
+                if (learningData[i][0] <= 40) learningAnswers[i] = new float[] { 0 };
+                if (learningData[i][0] > 40) learningAnswers[i] = new float[] { 1 };
 
-                thread1.Priority = ThreadPriority.Highest;
-
-                thread1.Start();
-            }
-            else
-            {
-                foreach (float val in NeuralNet.Run(new float[] { 1, 1 }))
-                {
-                    Console.Write(val + "\t");
-                }
-
-                Console.WriteLine();
-
-                foreach (float val in NeuralNet.Run(new float[] { 1, 0 }))
-                {
-                    Console.Write(val + "\t");
-                }
-
-                Console.WriteLine();
-
-                foreach (float val in NeuralNet.Run(new float[] { 0, 1 }))
-                {
-                    Console.Write(val + "\t");
-                }
-
-                Console.WriteLine();
-
-                foreach (float val in NeuralNet.Run(new float[] { 0, 0 }))
-                {
-                    Console.Write(val + "\t");
-                }
-
-                Console.WriteLine("\n^ ANSWERS BEFORE TRAIN");
-                Console.WriteLine("|");
-
-                Stopwatch stopwatch = new Stopwatch();
-
-                stopwatch.Start();
-
-                NeuralNet.Train(130, 1000, 0.01f, 0.3f,
-                    new float[][] {
-                    new float[] { 1, 1 },
-                    new float[] { 0, 1 },
-                    new float[] { 1, 0 },
-                    new float[] { 0, 0 }}, //данные для обучения
-
-                    new float[][] {
-                    new float[] { 1, 0 },
-                    new float[] { 0, 1 },
-                    new float[] { 0, 0 },
-                    new float[] { 1, 1 }}, //данные для тренировки
-
-                    new float[][] {
-                    new float[] { 1, 1 },
-                    new float[] { 1, 0 },
-                    new float[] { 1, 0 },
-                    new float[] { 0, 0 } }, //ответы для обучения
-
-                    new float[][] {
-                    new float[] { 1, 0 },
-                    new float[] { 1, 0 },
-                    new float[] { 0, 0 },
-                    new float[] { 1, 1 } }, //ответы для тестов
-
-                    new float[] { 0.25f, 0.1f }, logging:true);//схема дропаута 
-
-                stopwatch.Stop();
-                Console.WriteLine($"Elapsed time:{stopwatch.ElapsedMilliseconds}");
-
-                Console.WriteLine("| ANSWERS AFTER TRAIN");
-                Console.WriteLine("\\/");
+                if (learningData[i][0] < lrMin) lrMin = learningData[i][0];
+                if (learningData[i][0] > lrMax) lrMax = learningData[i][0];
             }
 
-            foreach (float val in NeuralNet.Run(new float[] { 0, 0 }))
+            for (int i = 0; i < testData.Length; i++)
             {
-                Console.Write(val + "\t");
-            }
-            Console.WriteLine();
+                float var = rnd.Next(10, 81);
 
-            foreach (float val in NeuralNet.Run(new float[] { 0, 1 }))
-            {
-                Console.Write(val + "\t");
-            }
-            Console.WriteLine();
-
-            foreach (float val in NeuralNet.Run(new float[] { 1, 0 }))
-            {
-                Console.Write(val + "\t");
-            }
-            Console.WriteLine();
-
-            foreach (float val in NeuralNet.Run(new float[] { 1, 1 }))
-            {
-                Console.Write(val + "\t");
+                testData[i] = new float[] { var };
+                if (testData[i][0] <= 40) testAnswers[i] = new float[] { 0 };
+                if (testData[i][0] > 40) testAnswers[i] = new float[] { 1 };
             }
 
-            Console.WriteLine();
-
-            if (!weightsLoaded)
+            for (int i = 0; i < learningData.Length; i++)
             {
-                Console.WriteLine("Save weights?(y, n)");
-
-                if (Console.ReadLine() == "y")
-                {
-                    NeuralNet.SaveWeights("Weights.xml");
-                }
+                learningData[i][0] = Normalize.Minimax(learningData[i][0], lrMin, lrMax);
             }
+
+            for (int i = 0; i < testData.Length; i++)
+            {
+                testData[i][0] = Normalize.Minimax(testData[i][0], lrMin, lrMax);
+            }
+
+            FeedForwardNN nn = new FeedForwardNN(new int[] { 1, 3, 2, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
+
+            nn.Train(5, 1000, 0.1f, 0.3f,
+                learningData, testData,
+                learningAnswers, testAnswers);
+
+            Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(39, lrMin, lrMax) })[0]);
+            Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(40, lrMin, lrMax) })[0]);
+            Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(41, lrMin, lrMax) })[0]);
+            Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(42, lrMin, lrMax) })[0]);
 
             Console.ReadLine();
-        }
-
-        static void calc()
-        {
-            double sum = 0;
-
-            for (int i = 0; i < 999999999; i++)
-            {
-                sum += (i * i);
-            }
         }
     }
 }

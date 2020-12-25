@@ -94,7 +94,16 @@ namespace NeuralNet
                 {
                     for (int learnDataCounter = 0; learnDataCounter < learnData.Length; learnDataCounter++)
                     {
-                        float[] NNOut = RunDropOut(learnData[learnDataCounter], DOScheme); // получаем выходы нс 
+                        float[] NNOut;
+
+                        if (DOScheme != null)
+                        {
+                            NNOut = RunDropOut(learnData[learnDataCounter], DOScheme); // получаем выходы нс 
+                        }
+                        else
+                        {
+                            NNOut = Run(learnData[learnDataCounter]); // получаем выходы нс 
+                        }
 
                         for (int i = 0; i < NNOut.Length; i++)
                         {
@@ -164,7 +173,7 @@ namespace NeuralNet
                         {
                             logger.WriteLine(TotalMse.ToString());
 
-                            Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter}\t Avg test error: {TotalMse}");
+                            Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter + 10}\t Avg test error: {TotalMse}");
                         }
 
                         if (Math.Abs(prevTestMSE - TotalMse) < accuracyChangeLimit)
