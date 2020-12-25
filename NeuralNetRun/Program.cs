@@ -1,16 +1,22 @@
 ﻿using System;
+using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
+using System.Drawing;
 using NeuralNet;
+
 
 namespace NeuralNetRun
 {
     class Program
     {
+        static Form form;
+
         static void Main(string[] args)
         {
             Random rnd = new Random();
@@ -55,9 +61,9 @@ namespace NeuralNetRun
                 testData[i][0] = Normalize.Minimax(testData[i][0], lrMin, lrMax);
             }
 
-            FeedForwardNN nn = new FeedForwardNN(new int[] { 1, 3, 2, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
+            FeedForwardNN nn = new FeedForwardNN(new int[] { 1, 3, 3, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
 
-            nn.Train(15, 1000, 0.01f, 0.3f,
+            nn.Train(10, 1000, 0.1f, 0.3f,
                 learningData, testData,
                 learningAnswers, testAnswers);
 
@@ -66,7 +72,45 @@ namespace NeuralNetRun
             Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(41, lrMin, lrMax) })[0]);
             Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(42, lrMin, lrMax) })[0]);
 
-            Console.ReadLine();
+            form = new Form();
+            form.Size = new Size(1050, 550);
+            form.Paint += Form_Paint;
+            form.ShowDialog();
+        }
+
+        static Graphics grBmp;
+        static Pen MyPen;
+        static Bitmap bmp;
+
+        private static void Form_Paint(object sender, PaintEventArgs e)
+        {
+            bmp = new Bitmap(1000, 500);
+            grBmp = Graphics.FromImage(bmp);
+            MyPen = new Pen(Color.Black);
+
+            Graphics graph = e.Graphics;
+            grBmp.Clear(Color.White);
+            MyPen.Color = Color.Black;
+
+            List<int> YCoord = new List<int>();
+
+            using (StreamReader sr = new StreamReader("./Train log.txt", Encoding.Default))
+            {
+                string line;
+
+                while ((line = sr.ReadLine()) != null)
+                {
+                    int val = Convert.ToInt32(Convert.ToSingle(line) * 10000);
+                    YCoord.Add(1000 - val);
+                }
+            }
+
+            for (int i = 0; i < YCoord.Count - 2; i++)
+            {
+                grBmp.DrawLine(MyPen, new Point(i * 2, YCoord[i]/2), new Point((i + 1) * 2, YCoord[i + 1]/2));
+            }
+
+            graph.DrawImage(bmp, 0, 0);
         }
     }
 }

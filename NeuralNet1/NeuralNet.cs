@@ -173,7 +173,7 @@ namespace NeuralNet
                         {
                             logger.WriteLine(TotalMse.ToString());
 
-                            Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter + 10}\t Avg test error: {TotalMse}");
+                            Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter}\t Avg test error: {TotalMse}");
                         }
 
                         if (Math.Abs(prevTestMSE - TotalMse) < accuracyChangeLimit)
@@ -188,6 +188,8 @@ namespace NeuralNet
                     }
                 }
             }
+
+            logger.Close();
         }
 
         public float[] Run(float[] inputs)
