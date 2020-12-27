@@ -13,9 +13,15 @@ namespace NeuralNet
             return (var - min) / (max - min);
         }
 
-        public static float ReverseMinimax(float var, float min, float max)
+        public static void ApplyMinimax(ref float[][] arr, float min, float max)
         {
-            return (var - min) / (max - min);
+            for (int i = 0; i < arr.Length; i++)
+            {
+                for (int k = 0; k < arr[i].Length; k++)
+                {
+                    arr[i][k] = Minimax(arr[i][k], min, max);
+                }
+            }
         }
     }
 }

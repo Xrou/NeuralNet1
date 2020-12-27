@@ -15,72 +15,39 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            float min = 100;
-            float max = 0;
+            float min = Utils.FindMin(Data.learnDataFnet, Data.learnDataJnet, Data.testDataFnet, Data.testDataJnet, Data.learnAnswersFnet, Data.learnAnswersJnet, Data.testAnswersFnet, Data.testAnswersJnet);
+            float max = Utils.FindMax(Data.learnDataFnet, Data.learnDataJnet, Data.testDataFnet, Data.testDataJnet, Data.learnAnswersFnet, Data.learnAnswersJnet, Data.testAnswersFnet, Data.testAnswersJnet);
 
-            for (int i = 0; i < Data.learnData.Length; i++)
-            {
-                for (int k = 0; k < Data.learnData[i].Length; k++)
-                {
-                    if (Data.learnData[i][k] < min) min = Data.learnData[i][k];
-                    if (Data.learnData[i][k] > max) max = Data.learnData[i][k];
-                }
-            }
+            Normalize.ApplyMinimax(ref Data.learnDataFnet, min, max);
+            Normalize.ApplyMinimax(ref Data.learnDataJnet, min, max);
+            Normalize.ApplyMinimax(ref Data.testDataFnet, min, max);
+            Normalize.ApplyMinimax(ref Data.testDataJnet, min, max);
+            Normalize.ApplyMinimax(ref Data.learnAnswersFnet, min, max);
+            Normalize.ApplyMinimax(ref Data.learnAnswersJnet, min, max);
+            Normalize.ApplyMinimax(ref Data.testAnswersFnet, min, max);
+            Normalize.ApplyMinimax(ref Data.testAnswersJnet, min, max);
 
-            for (int i = 0; i < Data.testData.Length; i++)
-            {
-                for (int k = 0; k < Data.testData[i].Length; k++)
-                {
-                    if (Data.testData[i][k] < min) min = Data.testData[i][k];
-                    if (Data.testData[i][k] > max) max = Data.testData[i][k];
-                }
-            }
+            FeedForwardNN FNet = new FeedForwardNN(new int[] { 3, 9, 9, 9, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
+            FeedForwardNN JNet = new FeedForwardNN(new int[] { 4, 9, 9, 9, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
 
-            for (int i = 0; i < Data.learnData.Length; i++)
-            {
-                for (int k = 0; k < Data.learnData[i].Length; k++)
-                {
-                    Data.learnData[i][k] = Normalize.Minimax(Data.learnData[i][k], min, max);
-                }
+            Task FNetThread = new Task(() => FNet.Train(5, 1000, 0.1f, 0.3f, Data.learnDataFnet, Data.testDataFnet, Data.learnAnswersFnet, Data.testAnswersFnet, logFileName: "FNet train log.txt"));
+            Task JNetThread = new Task(() => JNet.Train(5, 1000, 0.1f, 0.3f, Data.learnDataJnet, Data.testDataJnet, Data.learnAnswersJnet, Data.testAnswersJnet, logFileName: "JNet train log.txt"));
 
-                Data.learnAnswers[i][0] = Normalize.Minimax(Data.learnAnswers[i][0], min, max);
-                Data.learnAnswers[i][1] = Normalize.Minimax(Data.learnAnswers[i][1], min, max);
-            }
+            FNetThread.Start();
+            JNetThread.Start();
 
-            for (int i = 0; i < Data.testData.Length; i++)
-            {
-                for (int k = 0; k < Data.testData[i].Length; k++)
-                {
-                    Data.testData[i][k] = Normalize.Minimax(Data.testData[i][k], min, max); 
-                }
+            FNetThread.Wait();
+            JNetThread.Wait();
 
-                Data.testAnswers[i][0] = Normalize.Minimax(Data.testAnswers[i][0], min, max);
-                Data.testAnswers[i][1] = Normalize.Minimax(Data.testAnswers[i][1], min, max);
-            }
+            float na11 = Normalize.Minimax(33, min, max);//0.12
+            float na12 = Normalize.Minimax(48, min, max);//0.35
+            float na21 = Normalize.Minimax(35, min, max);//0.15
+            float na22 = Normalize.Minimax(43, min, max);//0.27
 
-            FeedForwardNN nn = new FeedForwardNN(new int[] { 5, 14, 28, 28, 9, 2 }, Activation.Sigmoid, Activation.DerivedSigmoid);
-
-            nn.Train(3, 1000, 0.01f, 0.35f,
-                Data.learnData,
-                Data.testData,
-                Data.learnAnswers,
-                Data.testAnswers,
-                new float[] { 0.20f, 0.25f, 0.25f, 0.20f });
-
-            float[][] answ = new float[3][];
-
-            float a1_1 = Normalize.Minimax(66, min, max);//0.63
-            float a1_2 = Normalize.Minimax(54, min, max);//0.44
-            float a2_1 = Normalize.Minimax(44, min, max);//0.29
-            float a2_2 = Normalize.Minimax(54, min, max);//0.44
-            float a3_1 = Normalize.Minimax(40, min, max);//0.23
-            float a3_2 = Normalize.Minimax(54, min, max);//0.44
-
-            answ[0] = nn.Run(new float[] { 58, 65, 67, 50, 60 }); //66 54
-            answ[1] = nn.Run(new float[] { 42, 43, 49, 55, 52 }); //44 54
-            answ[2] = nn.Run(new float[] { 49, 62, 58, 50, 60 }); //40 54
-
-            Console.ReadLine();
+            float[] a11 = FNet.Run(new float[] { 35, 43, 26 }); //33
+            float[] a12 = FNet.Run(new float[] { 46, 54, 44 }); //48
+            float[] a21 = JNet.Run(new float[] { 35, 35, 38, 26 }); //35
+            float[] a22 = JNet.Run(new float[] { 46, 49, 50, 44 }); //43
         }
     }
 }

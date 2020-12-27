@@ -61,7 +61,7 @@ namespace NeuralNet
             }
         }
 
-        public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float[] DOScheme = null, float accuracyChangeLimit = -1, bool logging = true) //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
+        public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float[] DOScheme = null, float accuracyChangeLimit = -1, bool logging = true, string logFileName = "Train log.txt") //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
         {
             if (DOScheme != null)
             {
@@ -85,7 +85,7 @@ namespace NeuralNet
                 }
             }
 
-            StreamWriter logger = new StreamWriter("Train log.txt", false);
+            StreamWriter logger = new StreamWriter(logFileName, false);
             float prevTestMSE = 0;
 
             for (int epoch = 0; epoch < epochs; epoch++)
