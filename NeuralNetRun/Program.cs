@@ -51,7 +51,7 @@ namespace NeuralNetRun
             {
                 for (int k = 0; k < Data.testData[i].Length; k++)
                 {
-                    Data.testData[i][k] = Normalize.Minimax(Data.testData[i][k], min, max);
+                    Data.testData[i][k] = Normalize.Minimax(Data.testData[i][k], min, max); 
                 }
 
                 Data.testAnswers[i][0] = Normalize.Minimax(Data.testAnswers[i][0], min, max);
