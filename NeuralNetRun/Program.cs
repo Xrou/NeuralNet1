@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -7,110 +6,81 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
-using System.Drawing;
 using NeuralNet;
 
 
 namespace NeuralNetRun
 {
-    class Program
+    public class Program
     {
-        static Form form;
-
         static void Main(string[] args)
         {
-            Random rnd = new Random();
+            float min = 100;
+            float max = 0;
 
-            float[][] learningData = new float[200][];
-            float[][] learningAnswers = new float[200][];
-
-            float[][] testData = new float[20][];
-            float[][] testAnswers = new float[20][];
-
-            float lrMin = 100;
-            float lrMax = 0;
-
-            for (int i = 0; i < learningData.Length; i++)
+            for (int i = 0; i < Data.learnData.Length; i++)
             {
-                float var = rnd.Next(10, 81);
-
-                learningData[i] = new float[] { var };
-                if (learningData[i][0] <= 40) learningAnswers[i] = new float[] { 0 };
-                if (learningData[i][0] > 40) learningAnswers[i] = new float[] { 1 };
-
-                if (learningData[i][0] < lrMin) lrMin = learningData[i][0];
-                if (learningData[i][0] > lrMax) lrMax = learningData[i][0];
-            }
-
-            for (int i = 0; i < testData.Length; i++)
-            {
-                float var = rnd.Next(10, 81);
-
-                testData[i] = new float[] { var };
-                if (testData[i][0] <= 40) testAnswers[i] = new float[] { 0 };
-                if (testData[i][0] > 40) testAnswers[i] = new float[] { 1 };
-            }
-
-            for (int i = 0; i < learningData.Length; i++)
-            {
-                learningData[i][0] = Normalize.Minimax(learningData[i][0], lrMin, lrMax);
-            }
-
-            for (int i = 0; i < testData.Length; i++)
-            {
-                testData[i][0] = Normalize.Minimax(testData[i][0], lrMin, lrMax);
-            }
-
-            FeedForwardNN nn = new FeedForwardNN(new int[] { 1, 3, 3, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
-
-            nn.Train(10, 1000, 0.1f, 0.3f,
-                learningData, testData,
-                learningAnswers, testAnswers);
-
-            Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(39, lrMin, lrMax) })[0]);
-            Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(40, lrMin, lrMax) })[0]);
-            Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(41, lrMin, lrMax) })[0]);
-            Console.WriteLine(nn.Run(new float[] { Normalize.Minimax(42, lrMin, lrMax) })[0]);
-
-            form = new Form();
-            form.Size = new Size(1050, 550);
-            form.Paint += Form_Paint;
-            form.ShowDialog();
-        }
-
-        static Graphics grBmp;
-        static Pen MyPen;
-        static Bitmap bmp;
-
-        private static void Form_Paint(object sender, PaintEventArgs e)
-        {
-            bmp = new Bitmap(1000, 500);
-            grBmp = Graphics.FromImage(bmp);
-            MyPen = new Pen(Color.Black);
-
-            Graphics graph = e.Graphics;
-            grBmp.Clear(Color.White);
-            MyPen.Color = Color.Black;
-
-            List<int> YCoord = new List<int>();
-
-            using (StreamReader sr = new StreamReader("./Train log.txt", Encoding.Default))
-            {
-                string line;
-
-                while ((line = sr.ReadLine()) != null)
+                for (int k = 0; k < Data.learnData[i].Length; k++)
                 {
-                    int val = Convert.ToInt32(Convert.ToSingle(line) * 10000);
-                    YCoord.Add(1000 - val);
+                    if (Data.learnData[i][k] < min) min = Data.learnData[i][k];
+                    if (Data.learnData[i][k] > max) max = Data.learnData[i][k];
                 }
             }
 
-            for (int i = 0; i < YCoord.Count - 2; i++)
+            for (int i = 0; i < Data.testData.Length; i++)
             {
-                grBmp.DrawLine(MyPen, new Point(i * 2, YCoord[i]/2), new Point((i + 1) * 2, YCoord[i + 1]/2));
+                for (int k = 0; k < Data.testData[i].Length; k++)
+                {
+                    if (Data.testData[i][k] < min) min = Data.testData[i][k];
+                    if (Data.testData[i][k] > max) max = Data.testData[i][k];
+                }
             }
 
-            graph.DrawImage(bmp, 0, 0);
+            for (int i = 0; i < Data.learnData.Length; i++)
+            {
+                for (int k = 0; k < Data.learnData[i].Length; k++)
+                {
+                    Data.learnData[i][k] = Normalize.Minimax(Data.learnData[i][k], min, max);
+                }
+
+                Data.learnAnswers[i][0] = Normalize.Minimax(Data.learnAnswers[i][0], min, max);
+                Data.learnAnswers[i][1] = Normalize.Minimax(Data.learnAnswers[i][1], min, max);
+            }
+
+            for (int i = 0; i < Data.testData.Length; i++)
+            {
+                for (int k = 0; k < Data.testData[i].Length; k++)
+                {
+                    Data.testData[i][k] = Normalize.Minimax(Data.testData[i][k], min, max);
+                }
+
+                Data.testAnswers[i][0] = Normalize.Minimax(Data.testAnswers[i][0], min, max);
+                Data.testAnswers[i][1] = Normalize.Minimax(Data.testAnswers[i][1], min, max);
+            }
+
+            FeedForwardNN nn = new FeedForwardNN(new int[] { 5, 14, 28, 28, 9, 2 }, Activation.Sigmoid, Activation.DerivedSigmoid);
+
+            nn.Train(3, 1000, 0.01f, 0.35f,
+                Data.learnData,
+                Data.testData,
+                Data.learnAnswers,
+                Data.testAnswers,
+                new float[] { 0.20f, 0.25f, 0.25f, 0.20f });
+
+            float[][] answ = new float[3][];
+
+            float a1_1 = Normalize.Minimax(66, min, max);//0.63
+            float a1_2 = Normalize.Minimax(54, min, max);//0.44
+            float a2_1 = Normalize.Minimax(44, min, max);//0.29
+            float a2_2 = Normalize.Minimax(54, min, max);//0.44
+            float a3_1 = Normalize.Minimax(40, min, max);//0.23
+            float a3_2 = Normalize.Minimax(54, min, max);//0.44
+
+            answ[0] = nn.Run(new float[] { 58, 65, 67, 50, 60 }); //66 54
+            answ[1] = nn.Run(new float[] { 42, 43, 49, 55, 52 }); //44 54
+            answ[2] = nn.Run(new float[] { 49, 62, 58, 50, 60 }); //40 54
+
+            Console.ReadLine();
         }
     }
 }

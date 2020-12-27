@@ -12,5 +12,10 @@ namespace NeuralNet
         {
             return (var - min) / (max - min);
         }
+
+        public static float ReverseMinimax(float var, float min, float max)
+        {
+            return (var - min) / (max - min);
+        }
     }
 }
