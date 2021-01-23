@@ -25,6 +25,7 @@ namespace NeuralNet
 
         private List<List<float>> Outputs = new List<List<float>>(); // слой, номер нейрона в слое
 
+
         public FeedForwardNN(int[] layersData, Activation activation, DerivedActivation derivedActivation) // layersData - кол-во нейронов в слое, кол-во элементов layersdata = кол-во слоев
         {
             random = new Random();
@@ -54,7 +55,7 @@ namespace NeuralNet
 
                     for (int synapse = 0; synapse < layersData[layer - 1]; synapse++)
                     {
-                        Weights[Weights.Count - 1][neuron].Add(random.Next(-1, 1));
+                        Weights[Weights.Count - 1][neuron].Add(random.Next(-1, 1) + (float)random.NextDouble());
                         WeightsDeltas[WeightsDeltas.Count - 1][neuron].Add(0f);
                     }
                 }
@@ -69,6 +70,7 @@ namespace NeuralNet
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Incorrect dropout scheme");
+                    Console.WriteLine($"Need {Outputs.Count - 2} elements");
                     Console.ForegroundColor = ConsoleColor.White;
                 }
             }
@@ -148,7 +150,7 @@ namespace NeuralNet
                          */
                     }
 
-                    if (iter % 10 == 0 && iter != 0)
+                    if (iter % 10 == 0)
                     {
                         float TotalMse = 0;
 
