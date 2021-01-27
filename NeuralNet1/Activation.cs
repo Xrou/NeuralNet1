@@ -15,5 +15,25 @@ namespace NeuralNet
         {
             return (1 - x) * x;
         }
+
+        static public float ReLU(float x)
+        {
+            if (x <= 0)
+            {
+                return 0.01f * (x + 0.000001f);
+            }
+
+            return x;
+        }
+
+        static public float DerivedReLU(float x)
+        {
+            if (x < 0)
+            {
+                return 0.0001f;
+            }
+
+            return 0.01f;
+        }
     }
 }

@@ -15,62 +15,41 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            float[][] Train = new float[2000][];
-            float[][] TrainAnswers = new float[2000][];
-            float[][] Test = new float[2000][];
-            float[][] TestAnswers = new float[2000][];
+            FeedForwardNN Net = new FeedForwardNN(new int[] { 5, 20, 30, 40, 30, 20, 2 }, Activation.ReLU, Activation.DerivedReLU);
 
-            Random rnd = new Random();
+            Task train = Task.Factory.StartNew(() => Net.Train(5, 2500, 0.0001f, 0.35f, Data.learnDataNet, Data.testDataNet, Data.learnAnswersNet, Data.testAnswersNet, new float[] { 0.15f, 0.15f, 0.15f, 0.15f, 0.15f }, logFileName: "Train log th1.txt"));
 
-            for (int i = 0; i < 2000; i++)
+            Task Control = Task.Factory.StartNew(() =>
             {
-                float emp = rnd.Next(-7, 8);
+                while (!train.IsCompleted)
+                {
+                    string input = Console.ReadLine();
 
-                Train[i] = new float[3];
-                Test[i] = new float[3];
+                    if (input == "\u0016") // ctrl+v
+                    {
+                        Net.StopTrain();
+                    }
+                }
+            });
 
-                Train[i][0] = 20 + emp;
-                Train[i][1] = 68 + emp * 1.4f;
-                Train[i][2] = (Train[i][0] + Train[i][1]) * 1.4f - 3;
+            while (!train.IsCompleted) { }
 
-                Test[i][0] = 20 + emp;
-                Test[i][1] = 68 + emp * 1.4f;
-                Test[i][2] = (Test[i][0] + Test[i][1]) * 1.4f - 3;
-            }
+            float[][] testAnswers = new float[3][];
 
-            for (int i = 0; i < 2000; i++)
-            {
-                TrainAnswers[i] = new float[1];
-                TestAnswers[i] = new float[1];
+            testAnswers[0] = Net.Run(Data.testDataNet[0]);
+            testAnswers[1] = Net.Run(Data.testDataNet[1]);
+            testAnswers[2] = Net.Run(Data.testDataNet[2]);
 
-                TrainAnswers[i][0] = (Train[i][0] * 1.3f + Train[i][1] * 1.1f + Train[i][2] * 0.7f) * 0.45f;
-                TestAnswers[i][0] = (Test[i][0] * 1.3f + Test[i][1] * 1.1f + Test[i][2] * 0.7f) * 0.45f;
-            }
+            Net.SaveWeights("weights.xml");
 
-
-            float min = Utils.FindMin(Train, TrainAnswers, Test, TestAnswers); //ищем минимум и максимум из всех данных
-            float max = Utils.FindMax(Train, TrainAnswers, Test, TestAnswers);
-
-            Normalize.ApplyMinimax(ref Train, min, max);
-            Normalize.ApplyMinimax(ref TrainAnswers, min, max);
-            Normalize.ApplyMinimax(ref Test, min, max);
-            Normalize.ApplyMinimax(ref TestAnswers, min, max);
-
-            FeedForwardNN FNet = new FeedForwardNN(new int[] { 3, 18, 16, 10, 5, 4, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
-
-            FNet.Train(3, 500, 0.0001f, 0.2f, Train, Test, TrainAnswers, TestAnswers, new float[] { 0.3f, 0.2f, 0.15f, 0.1f, 0.1f });
-
-            float val1 = FNet.Run(Test[0])[0];
-            float val2 = FNet.Run(Test[1])[0];
-            float val3 = FNet.Run(Test[2])[0];
-
+            /*
             float a1 = Normalize.ReverseMinimax(TestAnswers[0][0], min, max);
             float a2 = Normalize.ReverseMinimax(TestAnswers[1][0], min, max);
             float a3 = Normalize.ReverseMinimax(TestAnswers[2][0], min, max);
 
             float revNorm1 = Normalize.ReverseMinimax(val1, min, max);
             float revNorm2 = Normalize.ReverseMinimax(val2, min, max);
-            float revNorm3 = Normalize.ReverseMinimax(val3, min, max);
+            float revNorm3 = Normalize.ReverseMinimax(val3, min, max);*/
         }
     }
 }

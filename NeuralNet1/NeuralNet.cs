@@ -11,12 +11,17 @@ namespace NeuralNet
 {
     public class FeedForwardNN
     {
+        private bool StopFlag = false; // флаг для остановки обучения из другого потока
         private Random random;
         public delegate float Activation(float x);
         public delegate float DerivedActivation(float x);
+        public int[] layersData;
 
         Activation activation;
         DerivedActivation derivedActivation;
+
+        public float LearningRate;
+        public float Moment;
 
         // веса на вход нейрона
         [System.Xml.Serialization.XmlElement("Weights")]
@@ -28,11 +33,18 @@ namespace NeuralNet
 
         public FeedForwardNN(int[] layersData, Activation activation, DerivedActivation derivedActivation) // layersData - кол-во нейронов в слое, кол-во элементов layersdata = кол-во слоев
         {
+            InitNN(layersData, activation, derivedActivation);
+        }
+
+        private void InitNN(int[] layersData, Activation activation, DerivedActivation derivedActivation)
+        {
             random = new Random();
+
             Outputs.Add(new List<float>());
 
             this.activation = activation;
             this.derivedActivation = derivedActivation;
+            this.layersData = layersData;
 
             for (int i = 0; i < layersData[0]; i++) //добавляем входы как выходы
             {
@@ -55,15 +67,23 @@ namespace NeuralNet
 
                     for (int synapse = 0; synapse < layersData[layer - 1]; synapse++)
                     {
-                        Weights[Weights.Count - 1][neuron].Add(random.Next(-1, 1) + (float)random.NextDouble());
+                        do
+                        {
+                            Weights[Weights.Count - 1][neuron].Add(random.Next(-1, 1) + (float)random.NextDouble());
+                        }
+                        while (Weights[Weights.Count - 1][neuron][synapse] == 0);
+
                         WeightsDeltas[WeightsDeltas.Count - 1][neuron].Add(0f);
                     }
                 }
             }
         }
 
-        public void Train(int epochs, int iterCount, float LearningRate, float Moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float[] DOScheme = null, float accuracyChangeLimit = -1, bool logging = true, string logFileName = "Train log.txt") //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
+        public int Train(int epochs, int iterCount, float learningRate, float moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float[] DOScheme = null, float accuracyChangeLimit = -1, bool logging = true, string logFileName = "Train log.txt") //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
         {
+            LearningRate = learningRate;
+            Moment = moment;
+
             if (DOScheme != null)
             {
                 if (DOScheme.Length + 2 != Outputs.Count)
@@ -132,41 +152,36 @@ namespace NeuralNet
                                 for (int synapse = 0; synapse < Outputs[layer + 1].Count; synapse++)
                                 {
                                     float deltaW = Outputs[layer][neuron] * deltas[layer + 1][synapse];
-                                    deltaW = LearningRate * deltaW + Moment * WeightsDeltas[layer][synapse][neuron]; // тут сложно см ниже
+                                    deltaW = LearningRate * deltaW + Moment * WeightsDeltas[layer][synapse][neuron];
 
                                     Weights[layer][synapse][neuron] += deltaW;
                                     WeightsDeltas[layer][synapse][neuron] = deltaW;
                                 }
                             }
                         }
-
-                        /*
-                        суть подсчета дельт такая:
-                        т.к. у нас слоев весов 2(см. 1.jpg), а выходов и дельт всегда на 1 слой больше, так еще и веса у нас на вход, то
-                        получается не очень удобно считать дельты. Поэтому я в перебираю не синапсы от нейрона, а нейроны, а нейроны от нейрона(2.jpg)
-
-                        Как хранятся веса: Слой, нейрон, входы в этот нейрон
-
-                         */
                     }
 
                     if (iter % 10 == 0)
                     {
                         float TotalMse = 0;
+                        float TotalAvg = 0;
 
                         for (int testDataCounter = 0; testDataCounter < testData.Length; testDataCounter++)
                         {
                             float[] NNOut = Run(testData[testDataCounter]); // получаем выходы нс 
 
                             float MSE = 0;
+                            float Avg = 0;
 
                             for (int i = 0; i < NNOut.Length; i++)
                             {
                                 MSE += (float)Math.Pow(testAnswers[testDataCounter][i] - NNOut[i], 2); //подсчитываем сумму ошибок
+                                Avg += testAnswers[testDataCounter][i] - NNOut[i];
                             }
 
                             MSE = MSE / NNOut.Length; // делим
                             TotalMse += MSE;
+                            TotalAvg += Avg / NNOut.Length;
                         }
 
                         TotalMse /= testData.Length;
@@ -175,7 +190,7 @@ namespace NeuralNet
                         {
                             logger.WriteLine(TotalMse.ToString());
 
-                            Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter}\t Avg test error: {TotalMse}");
+                            Console.WriteLine($"Epoch: {epoch + 1}\t Iteration: {iter}\t MSE: {TotalMse}\t Average error: {TotalAvg}");
                         }
 
                         if (Math.Abs(prevTestMSE - TotalMse) < accuracyChangeLimit)
@@ -183,15 +198,40 @@ namespace NeuralNet
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Accuracy limit!");
                             Console.ForegroundColor = ConsoleColor.White;
-                            return;
+                            return 2;
                         }
 
                         prevTestMSE = TotalMse;
+
+                        if (StopFlag == true)
+                        {
+                            StopFlag = false;
+                            return 3;
+                        }
+
+                        if (float.IsNaN(TotalMse))
+                        {
+                            logger.Close();
+                            return -2;
+                        }
                     }
                 }
             }
 
             logger.Close();
+            return 1;
+        }
+
+        /*
+         1 - Обучение успешно закончено
+         2 - Обучение прервано из-за достгнутого лимита
+         3 - Остановка обучения по флагу
+        -2 - Появился NaN
+        */
+
+        public void StopTrain()
+        {
+            StopFlag = true;
         }
 
         public float[] Run(float[] inputs)
@@ -277,6 +317,16 @@ namespace NeuralNet
             }
 
             return Outputs[Outputs.Count - 1].ToArray();
+        }
+
+        public void IncreaseLearningRate()
+        {
+            LearningRate *= 10;
+        }
+
+        public void DecreaseLearningRate()
+        {
+            LearningRate /= 10;
         }
 
         public void SaveWeights(string fn)
