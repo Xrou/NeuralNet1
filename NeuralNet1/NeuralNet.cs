@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Xml;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
 using System.IO;
+using System.Xml.Serialization;
 
 namespace NeuralNet
 {
@@ -19,9 +15,6 @@ namespace NeuralNet
 
         Activation activation;
         DerivedActivation derivedActivation;
-
-        public float LearningRate;
-        public float Moment;
 
         // веса на вход нейрона
         [System.Xml.Serialization.XmlElement("Weights")]
@@ -79,21 +72,9 @@ namespace NeuralNet
             }
         }
 
-        public int Train(int epochs, int iterCount, float learningRate, float moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float[] DOScheme = null, float accuracyChangeLimit = -1, bool logging = true, string logFileName = "Train log.txt") //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
+        public int TrainBackPropogation(int epochs, int iterCount, float learningRate, float moment, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float[] DOScheme = null, float accuracyChangeLimit = -1, bool logging = true, string logFileName = "Train log.txt") //берем кол-во эпох, итераций в эпохе, данные для обучения, ответы
         {
-            LearningRate = learningRate;
-            Moment = moment;
-
-            if (DOScheme != null)
-            {
-                if (DOScheme.Length + 2 != Outputs.Count)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Incorrect dropout scheme");
-                    Console.WriteLine($"Need {Outputs.Count - 2} elements");
-                    Console.ForegroundColor = ConsoleColor.White;
-                }
-            }
+            bool DOScemeIsCorrect = CheckDOScheme(DOScheme);
 
             List<List<float>> deltas = new List<List<float>>(); // создаем листы для хранения дельт
 
@@ -107,7 +88,13 @@ namespace NeuralNet
                 }
             }
 
-            StreamWriter logger = new StreamWriter(logFileName, false);
+            StreamWriter logger = null;
+
+            if (logging)
+            {
+                logger = new StreamWriter(logFileName, false);
+            }
+
             float prevTestMSE = 0;
 
             for (int epoch = 0; epoch < epochs; epoch++)
@@ -118,7 +105,7 @@ namespace NeuralNet
                     {
                         float[] NNOut;
 
-                        if (DOScheme != null)
+                        if (DOScheme != null && DOScemeIsCorrect == true)
                         {
                             NNOut = RunDropOut(learnData[learnDataCounter], DOScheme); // получаем выходы нс 
                         }
@@ -152,7 +139,7 @@ namespace NeuralNet
                                 for (int synapse = 0; synapse < Outputs[layer + 1].Count; synapse++)
                                 {
                                     float deltaW = Outputs[layer][neuron] * deltas[layer + 1][synapse];
-                                    deltaW = LearningRate * deltaW + Moment * WeightsDeltas[layer][synapse][neuron];
+                                    deltaW = learningRate * deltaW + moment * WeightsDeltas[layer][synapse][neuron];
 
                                     Weights[layer][synapse][neuron] += deltaW;
                                     WeightsDeltas[layer][synapse][neuron] = deltaW;
@@ -211,7 +198,11 @@ namespace NeuralNet
 
                         if (float.IsNaN(TotalMse))
                         {
-                            logger.Close();
+                            if (logging)
+                            {
+                                logger.Close();
+                            }
+
                             return -2;
                         }
                     }
@@ -222,12 +213,34 @@ namespace NeuralNet
             return 1;
         }
 
+        public void TrainResilentBackPropogation(int epochs, int iterCount, float[][] learnData, float[][] testData, float[][] learnAnswers, float[][] testAnswers, float etaPlus = 1.2f, float etaMinus = 0.5f, float deltaMax = 50.0f, float deltaMin = 1.0E-6f)
+        {
+
+        }
+
         /*
          1 - Обучение успешно закончено
-         2 - Обучение прервано из-за достгнутого лимита
+         2 - Обучение прервано из-за достигнутого лимита
          3 - Остановка обучения по флагу
         -2 - Появился NaN
         */
+
+        bool CheckDOScheme(float[] DOScheme)
+        {
+            if (DOScheme != null)
+            {
+                if (DOScheme.Length + 2 != Outputs.Count)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Incorrect dropout scheme");
+                    Console.WriteLine($"Need {Outputs.Count - 2} elements");
+                    Console.ForegroundColor = ConsoleColor.White;
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
         public void StopTrain()
         {
@@ -317,16 +330,6 @@ namespace NeuralNet
             }
 
             return Outputs[Outputs.Count - 1].ToArray();
-        }
-
-        public void IncreaseLearningRate()
-        {
-            LearningRate *= 10;
-        }
-
-        public void DecreaseLearningRate()
-        {
-            LearningRate /= 10;
         }
 
         public void SaveWeights(string fn)

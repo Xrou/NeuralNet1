@@ -18,9 +18,9 @@ namespace NeuralNet
 
         static public float ReLU(float x)
         {
-            if (x <= 0)
+            if (x < 0)
             {
-                return 0.01f * (x + 0.000001f);
+                return 0.1f * x;
             }
 
             return x;
@@ -30,10 +30,20 @@ namespace NeuralNet
         {
             if (x < 0)
             {
-                return 0.0001f;
+                return 0.1f;
             }
 
-            return 0.01f;
+            return 1;
+        }
+
+        static public float Tanh(float x)
+        {
+            return (float)((Math.Pow(E, x) - Math.Pow(E, -x)) / (Math.Pow(E, x) + Math.Pow(E, -x)));
+        }
+
+        static public float DeriverTanh(float x)
+        {
+            return (float)(1 - Math.Pow(Tanh(x), 2));
         }
     }
 }

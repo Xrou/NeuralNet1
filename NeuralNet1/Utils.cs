@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NeuralNet
+﻿namespace NeuralNet
 {
     public class Utils
     {
         public static float FindMin(params float[][][] arr)
         {
-            float min = 100;
+            float min = arr[0][0][0];
 
             for (int i = 0; i < arr.Length; i++)
             {
@@ -28,7 +22,7 @@ namespace NeuralNet
 
         public static float FindMax(params float[][][] arr)
         {
-            float max = 0;
+            float max = arr[0][0][0];
 
             for (int i = 0; i < arr.Length; i++)
             {

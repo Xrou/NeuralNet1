@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NeuralNet
+﻿namespace NeuralNet
 {
     public class Normalize
     {
         public static float Minimax(float var, float min, float max)
         {
             return (var - min) / (max - min);
+        }
+
+        public static float Map(float var, float fromMin, float fromMax, float toMin, float toMax)
+        {
+            return (var - fromMin) * (toMax - toMin) / (fromMax - fromMin) + toMin;
         }
 
         public static float ReverseMinimax(float var, float min, float max)
@@ -40,6 +39,17 @@ namespace NeuralNet
                 for (int k = 0; k < arr[i].Length; k++)
                 {
                     arr[i][k] = Minimax(arr[i][k], min, max);
+                }
+            }
+        }
+
+        public static void ApplyMap(ref float[][] arr, float fromMin, float fromMax, float toMin, float toMax)
+        {
+            for (int i = 0; i < arr.Length; i++)
+            {
+                for (int k = 0; k < arr[i].Length; k++)
+                {
+                    arr[i][k] = Map(arr[i][k], fromMin, fromMax, toMin, toMax);
                 }
             }
         }

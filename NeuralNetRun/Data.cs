@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NeuralNetRun
+﻿namespace NeuralNetRun
 {
     public class Data
     {
@@ -166,6 +160,168 @@ namespace NeuralNetRun
             new float[] { 63, 46 }
         };
 
+
+        public static float[][] learnAnswersNet1 = new float[][]
+        {
+            new float[] { 43 },
+            new float[] { 48 },
+            new float[] { 48 },
+            new float[] { 58 },
+            new float[] { 43 },
+            new float[] { 63 },
+            new float[] { 43 },
+            new float[] { 40 },
+            new float[] { 40 },
+            new float[] { 36 },
+            new float[] { 40 },
+            new float[] { 47 },
+            new float[] { 43 },
+            new float[] { 52 },
+            new float[] { 70 },
+            new float[] { 38 },
+            new float[] { 28 },
+            new float[] { 44 },
+            new float[] { 40 },
+            new float[] { 28 },
+            new float[] { 40 },
+            new float[] { 55 },
+            new float[] { 44 },
+            new float[] { 28 },
+            new float[] { 37 },
+            new float[] { 33 },
+            new float[] { 74 },
+            new float[] { 44 },
+            new float[] { 44 },
+            new float[] { 40 },
+            new float[] { 44 },
+            new float[] { 52 },
+            new float[] { 70 },
+            new float[] { 40 },
+            new float[] { 36 },
+            new float[] { 33 },
+            new float[] { 33 },
+            new float[] { 33 },
+            new float[] { 55 },
+            new float[] { 63 },
+            new float[] { 66 },
+            new float[] { 52 },
+            new float[] { 55 },
+            new float[] { 36 },
+            new float[] { 48 },
+            new float[] { 55 },
+            new float[] { 59 },
+            new float[] { 55 },
+            new float[] { 66 },
+            new float[] { 55 },
+            new float[] { 48 },
+            new float[] { 55 },
+            new float[] { 52 },
+            new float[] { 48 },
+            new float[] { 52 },
+            new float[] { 52 },
+            new float[] { 44 },
+            new float[] { 63 },
+            new float[] { 33 },
+            new float[] { 59 },
+            new float[] { 52 },
+            new float[] { 44 },
+            new float[] { 52 },
+            new float[] { 55 },
+            new float[] { 52 },
+            new float[] { 63 },
+            new float[] { 48 },
+            new float[] { 40 },
+            new float[] { 48 },
+            new float[] { 55 },
+            new float[] { 48 },
+            new float[] { 59 },
+            new float[] { 52 },
+            new float[] { 44 },
+            new float[] { 63 }
+        };
+
+
+
+        public static float[][] learnAnswersNet2 = new float[][]
+        {
+            new float[] { 49 },
+            new float[] { 47 },
+            new float[] { 49 },
+            new float[] { 64 },
+            new float[] { 60 },
+            new float[] { 87 },
+            new float[] { 49 },
+            new float[] { 53 },
+            new float[] { 53 },
+            new float[] { 38 },
+            new float[] { 49 },
+            new float[] { 38 },
+            new float[] { 49 },
+            new float[] { 43 },
+            new float[] { 64 },
+            new float[] { 32 },
+            new float[] { 43 },
+            new float[] { 46 },
+            new float[] { 53 },
+            new float[] { 64 },
+            new float[] { 49 },
+            new float[] { 44 },
+            new float[] { 47 },
+            new float[] { 47 },
+            new float[] { 57 },
+            new float[] { 49 },
+            new float[] { 63 },
+            new float[] { 46 },
+            new float[] { 43 },
+            new float[] { 39 },
+            new float[] { 53 },
+            new float[] { 53 },
+            new float[] { 63 },
+            new float[] { 60 },
+            new float[] { 46 },
+            new float[] { 43 },
+            new float[] { 43 },
+            new float[] { 43 },
+            new float[] { 43 },
+            new float[] { 46 },
+            new float[] { 56 },
+            new float[] { 67 },
+            new float[] { 54 },
+            new float[] { 35 },
+            new float[] { 32 },
+            new float[] { 39 },
+            new float[] { 60 },
+            new float[] { 63 },
+            new float[] { 70 },
+            new float[] { 54 },
+            new float[] { 60 },
+            new float[] { 60 },
+            new float[] { 56 },
+            new float[] { 39 },
+            new float[] { 63 },
+            new float[] { 56 },
+            new float[] { 43 },
+            new float[] { 56 },
+            new float[] { 35 },
+            new float[] { 56 },
+            new float[] { 54 },
+            new float[] { 56 },
+            new float[] { 56 },
+            new float[] { 54 },
+            new float[] { 43 },
+            new float[] { 63 },
+            new float[] { 49 },
+            new float[] { 35 },
+            new float[] { 43 },
+            new float[] { 54 },
+            new float[] { 56 },
+            new float[] { 60 },
+            new float[] { 49 },
+            new float[] { 56 },
+            new float[] { 46 }
+        };
+
+
         public static float[][] testDataNet = new float[][]
         {
             new float[] { 62,  56,  58,  50,  52 },
@@ -193,6 +349,34 @@ namespace NeuralNetRun
             new float[] { 40, 54 },
             new float[] { 59, 56 },
             new float[] { 55, 67 }
+        };
+
+        public static float[][] testAnswersNet1 = new float[][]
+        {
+            new float[] { 59 },
+            new float[] { 63 },
+            new float[] { 36 },
+            new float[] { 44 },
+            new float[] { 52 },
+            new float[] { 55 },
+            new float[] { 52 },
+            new float[] { 40 },
+            new float[] { 59 },
+            new float[] { 55 }
+        };
+
+        public static float[][] testAnswersNet2 = new float[][]
+        {
+            new float[] { 54 },
+            new float[] { 54 },
+            new float[] { 46 },
+            new float[] { 46 },
+            new float[] { 60 },
+            new float[] { 70 },
+            new float[] { 49 },
+            new float[] { 54 },
+            new float[] { 56 },
+            new float[] { 67 }
         };
     }
 }

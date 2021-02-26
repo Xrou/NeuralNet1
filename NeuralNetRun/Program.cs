@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
+﻿using NeuralNet;
+using System;
 using System.Threading.Tasks;
-using System.IO;
-using NeuralNet;
 
 
 namespace NeuralNetRun
@@ -15,9 +9,21 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            FeedForwardNN Net = new FeedForwardNN(new int[] { 5, 20, 30, 40, 30, 20, 2 }, Activation.ReLU, Activation.DerivedReLU);
+            float max = Utils.FindMax(Data.learnDataNet, Data.testDataNet, Data.learnAnswersNet, Data.testAnswersNet);
+            float min = Utils.FindMin(Data.learnDataNet, Data.testDataNet, Data.learnAnswersNet, Data.testAnswersNet);
 
-            Task train = Task.Factory.StartNew(() => Net.Train(5, 2500, 0.0001f, 0.35f, Data.learnDataNet, Data.testDataNet, Data.learnAnswersNet, Data.testAnswersNet, new float[] { 0.15f, 0.15f, 0.15f, 0.15f, 0.15f }, logFileName: "Train log th1.txt"));
+            Normalize.ApplyMap(ref Data.learnDataNet, min, max, -1, 1);
+            Normalize.ApplyMap(ref Data.learnAnswersNet, min, max, -1, 1);
+            Normalize.ApplyMap(ref Data.learnAnswersNet1, min, max, -1, 1);
+            Normalize.ApplyMap(ref Data.learnAnswersNet2, min, max, -1, 1);
+            Normalize.ApplyMap(ref Data.testDataNet, min, max, -1, 1);
+            Normalize.ApplyMap(ref Data.testAnswersNet, min, max, -1, 1);
+            Normalize.ApplyMap(ref Data.testAnswersNet1, min, max, -1, 1);
+            Normalize.ApplyMap(ref Data.testAnswersNet2, min, max, -1, 1);
+
+            FeedForwardNN Net = new FeedForwardNN(new int[] { 5, 7, 10, 12, 8, 7, 1 }, Activation.Tanh, Activation.DeriverTanh);
+
+            Task train = Task.Factory.StartNew(() => Net.TrainBackPropogation(5, 1000, 0.0001f, 0.3f, Data.learnDataNet, Data.testDataNet, Data.learnAnswersNet1, Data.testAnswersNet1));
 
             Task Control = Task.Factory.StartNew(() =>
             {
@@ -41,6 +47,7 @@ namespace NeuralNetRun
             testAnswers[2] = Net.Run(Data.testDataNet[2]);
 
             Net.SaveWeights("weights.xml");
+
 
             /*
             float a1 = Normalize.ReverseMinimax(TestAnswers[0][0], min, max);
