@@ -1,4 +1,6 @@
-﻿using NeuralNet;
+﻿using NeuralNet.Base;
+using NeuralNet.BackPropogation;
+using NeuralNet.Genetic;
 using System;
 using System.Threading.Tasks;
 
@@ -9,145 +11,11 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            float max = Utils.FindMax(Data.learnDataNet, Data.testDataNet, Data.learnAnswersNet, Data.testAnswersNet);
-            float min = Utils.FindMin(Data.learnDataNet, Data.testDataNet, Data.learnAnswersNet, Data.testAnswersNet);
+            PopulationController populationController = new PopulationController
+                (new FeedForwardNNDescriptor(new int[] { 4, 8, 8, 16, 8, 2 }, Activations.Sigmoid, Activations.DerivedSigmoid),
+                50);
 
-            Normalize.ApplyMap(ref Data.learnDataNet, min, max, -1, 1);
-            Normalize.ApplyMap(ref Data.learnAnswersNet, min, max, -1, 1);
-            Normalize.ApplyMap(ref Data.learnAnswersNet1, min, max, -1, 1);
-            Normalize.ApplyMap(ref Data.learnAnswersNet2, min, max, -1, 1);
-            Normalize.ApplyMap(ref Data.testDataNet, min, max, -1, 1);
-            Normalize.ApplyMap(ref Data.testAnswersNet, min, max, -1, 1);
-            Normalize.ApplyMap(ref Data.testAnswersNet1, min, max, -1, 1);
-            Normalize.ApplyMap(ref Data.testAnswersNet2, min, max, -1, 1);
-
-            FeedForwardNN Net = new FeedForwardNN(new int[] { 5, 7, 10, 12, 8, 7, 1 }, Activation.Tanh, Activation.DeriverTanh);
-
-            Task train = Task.Factory.StartNew(() => Net.TrainBackPropogation(5, 1000, 0.0001f, 0.3f, Data.learnDataNet, Data.testDataNet, Data.learnAnswersNet1, Data.testAnswersNet1));
-
-            Task Control = Task.Factory.StartNew(() =>
-            {
-                while (!train.IsCompleted)
-                {
-                    string input = Console.ReadLine();
-
-                    if (input == "\u0016") // ctrl+v
-                    {
-                        Net.StopTrain();
-                    }
-                }
-            });
-
-            while (!train.IsCompleted) { }
-
-            float[][] testAnswers = new float[3][];
-
-            testAnswers[0] = Net.Run(Data.testDataNet[0]);
-            testAnswers[1] = Net.Run(Data.testDataNet[1]);
-            testAnswers[2] = Net.Run(Data.testDataNet[2]);
-
-            Net.SaveWeights("weights.xml");
-
-
-            /*
-            float a1 = Normalize.ReverseMinimax(TestAnswers[0][0], min, max);
-            float a2 = Normalize.ReverseMinimax(TestAnswers[1][0], min, max);
-            float a3 = Normalize.ReverseMinimax(TestAnswers[2][0], min, max);
-
-            float revNorm1 = Normalize.ReverseMinimax(val1, min, max);
-            float revNorm2 = Normalize.ReverseMinimax(val2, min, max);
-            float revNorm3 = Normalize.ReverseMinimax(val3, min, max);*/
+            populationController.CreateNewPopulation(0.01f, 1, 0.15f);
         }
     }
 }
-
-
-/* main
- 
-            float min = Utils.FindMin(Data.learnDataFnet, Data.learnDataJnet, Data.testDataFnet, Data.testDataJnet, Data.learnAnswersFnet, Data.learnAnswersJnet, Data.testAnswersFnet, Data.testAnswersJnet); //ищем минимум и максимум из всех данных
-            float max = Utils.FindMax(Data.learnDataFnet, Data.learnDataJnet, Data.testDataFnet, Data.testDataJnet, Data.learnAnswersFnet, Data.learnAnswersJnet, Data.testAnswersFnet, Data.testAnswersJnet);
-
-            Normalize.ApplyMinimax(ref Data.learnDataFnet, min, max); //приводим к диапозону [0, 1]
-            Normalize.ApplyMinimax(ref Data.learnDataJnet, min, max);
-            Normalize.ApplyMinimax(ref Data.testDataFnet, min, max);
-            Normalize.ApplyMinimax(ref Data.testDataJnet, min, max);
-            Normalize.ApplyMinimax(ref Data.learnAnswersFnet, min, max);
-            Normalize.ApplyMinimax(ref Data.learnAnswersJnet, min, max);
-            Normalize.ApplyMinimax(ref Data.testAnswersFnet, min, max);
-            Normalize.ApplyMinimax(ref Data.testAnswersJnet, min, max);
-
-            FeedForwardNN FNet = new FeedForwardNN(new int[] { 3, 9, 9, 9, 9, 9, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid); // инициализация сети
-            FeedForwardNN JNet = new FeedForwardNN(new int[] { 4, 9, 9, 9, 9, 9, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
-
-            Task FNetTask = new Task(() => FNet.Train(5, 1000, 0.01f, 0.2f, Data.learnDataFnet, Data.testDataFnet, Data.learnAnswersFnet, Data.testAnswersFnet, logFileName: "FNet train log.txt")); // создаем таск по обучению
-            Task JNetTask = new Task(() => JNet.Train(5, 1000, 0.01f, 0.2f, Data.learnDataJnet, Data.testDataJnet, Data.learnAnswersJnet, Data.testAnswersJnet, logFileName: "JNet train log.txt"));
-
-            FNetTask.Start(); // запускаем обучение в два потока
-            JNetTask.Start();
-
-            FNetTask.Wait(); // ждем пока сети обучатся
-            JNetTask.Wait();
-
-            // смотрим пример из тестов
-
-            float nF1 = Normalize.Minimax(33, min, max);
-            float nF2 = Normalize.Minimax(48, min, max);
-            float nJ1 = Normalize.Minimax(35, min, max);
-            float nJ2 = Normalize.Minimax(43, min, max);
-
-            float aF1 = FNet.Run(new float[] { 35, 43, 26 })[0];
-            float aF2 = FNet.Run(new float[] { 46, 54, 44 })[0];
-            float aJ1 = JNet.Run(new float[] { 35, 35, 38, 26 })[0];
-            float aJ2 = JNet.Run(new float[] { 46, 49, 50, 44 })[0];
- */
-
-
-/*
-            float[][] A = new float[2000][];
-            float[][] B = new float[100][];
-            float[][] C = new float[2000][];
-            float[][] D = new float[100][];
-
-            Random rnd = new Random();
-
-            for (int i = 0; i < 2000; i++)
-            {
-                float emp = rnd.Next(-5, 5);
-
-                A[i] = new float[3];
-                C[i] = new float[1];
-
-                A[i][0] = 50 + emp;
-                A[i][1] = 10 + emp + rnd.Next(-1, 1);
-                A[i][2] = 11 + emp + rnd.Next(-1, 1);
-                C[i][0] = (50 + 10 + emp) / 2;
-            }
-
-            for (int i = 0; i < 100; i++)
-            {
-                float emp = rnd.Next(-5, 5);
-
-                B[i] = new float[3];
-                D[i] = new float[1];
-
-                B[i][0] = 50 + emp;
-                B[i][1] = 10 + emp + rnd.Next(-1, 1);
-                B[i][2] = 11 + emp + rnd.Next(-1, 1);
-                D[i][0] = (50 + 10 + emp) / 2;
-            }
-
-
-            float min = Utils.FindMin(A, C); //ищем минимум и максимум из всех данных
-            float max = Utils.FindMax(A, C);
-
-            Normalize.ApplyMinimax(ref A, min, max);
-            Normalize.ApplyMinimax(ref C, min, max);
-
-            FeedForwardNN FNet = new FeedForwardNN(new int[] { 3, 9, 9, 9, 9, 9, 1 }, Activation.Sigmoid, Activation.DerivedSigmoid);
-
-            FNet.Train(5, 1000, 0.01f, 0.2f, A, B, C, D);
-
-            float val1 = FNet.Run(B[0])[0];
-            float val2 = FNet.Run(B[1])[0];
-            float val3 = FNet.Run(B[2])[0];
- */

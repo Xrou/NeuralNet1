@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace NeuralNet
+namespace NeuralNet.Base
 {
-    public class Activation
+    public class Activations
     {
         private const float E = 2.7182818285f;
 
