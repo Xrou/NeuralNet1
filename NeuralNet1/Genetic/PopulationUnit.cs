@@ -7,7 +7,7 @@ using NeuralNet.Base;
 
 namespace NeuralNet.Genetic
 {
-    public class PopulationUnit : ICloneable
+    public class PopulationUnit : ICloneable, IComparable
     {
         public FeedForwardNN NN;
         public float Rate = 0;
@@ -21,7 +21,7 @@ namespace NeuralNet.Genetic
             Outputs = new float[NN.Descriptor.LayersData[NN.Descriptor.LayersData.Length - 1]];
         }
 
-        public float[] GetNNOutput(float[] inputs)
+        public float[] NNRun(float[] inputs)
         {
             Outputs = NN.Run(inputs);
 
@@ -37,6 +37,16 @@ namespace NeuralNet.Genetic
             PU.Rate = Rate;
 
             return PU;
+        }
+
+        public int CompareTo(object obj)
+        {
+            PopulationUnit p = obj as PopulationUnit;
+
+            if (p != null)
+                return this.Rate.CompareTo(p.Rate);
+            else
+                throw new Exception("Невозможно сравнить два объекта");
         }
     }
 }

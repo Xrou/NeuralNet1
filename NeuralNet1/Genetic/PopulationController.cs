@@ -42,25 +42,23 @@ namespace NeuralNet.Genetic
             return Population[index];
         }
 
-        public void CreateNewPopulation(float mutationChance, int mutationPower, float crossoverChance)
+        public void CreateNewPopulation(float mutationChance, int mutationPower, float crossoverChance, bool findMin = false)
         {
-            PopulationUnit best1 = (PopulationUnit)Population[0].Clone();
-            PopulationUnit best2 = (PopulationUnit)Population[1].Clone();
+            PopulationUnit best1;
+            PopulationUnit best2;
 
-            for (int i = 0; i < PopulationCount; i++)
+            Array.Sort(Population);
+
+            if (!findMin)
             {
-                if (Population[i].Rate > best1.Rate)
-                    best1 = Population[i];
+                best1 = (PopulationUnit)Population[PopulationCount - 1].Clone();
+                best2 = (PopulationUnit)Population[PopulationCount - 2].Clone();
             }
-
-            for (int i = 0; i < PopulationCount; i++)
+            else
             {
-                if (Population[i].Rate > best2.Rate && Population[i] != best1)
-                    best2 = Population[i];
+                best1 = (PopulationUnit)Population[0].Clone();
+                best2 = (PopulationUnit)Population[1].Clone();
             }
-
-            best1 = (PopulationUnit)best1.Clone();
-            best2 = (PopulationUnit)best2.Clone();
 
             for (int i = 2; i < PopulationCount; i++)
             {
