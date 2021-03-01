@@ -80,15 +80,13 @@ namespace NeuralNet.Genetic
                     {
                         for (int l = 0; l < best1.NN.Weights[k][j].Count; l++)
                         {
+                            Crossover.NN.Weights[k][j][l] = best1.NN.Weights[k][j][l];
+
                             if (cross < crossoverChance)
                             {
                                 if (crossType < 0.5f)
                                 {
                                     if (Base.Random.Next(0, 2) == 0)
-                                    {
-                                        Crossover.NN.Weights[k][j][l] = best1.NN.Weights[k][j][l];
-                                    }
-                                    else
                                     {
                                         Crossover.NN.Weights[k][j][l] = best2.NN.Weights[k][j][l];
                                     }
@@ -116,6 +114,9 @@ namespace NeuralNet.Genetic
 
                 Population[i] = Crossover;
             }
+
+            best1.Rate = 0;
+            best2.Rate = 0;
 
             Population[0] = best1;
             Population[1] = best2;
