@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using NeuralNet.Base;
 
 namespace NeuralNet.Genetic
 {
+    public delegate void PostIterationEvolutionMethod(int iter, PopulationUnit best1);
+
     public class PopulationController
     {
         public int PopulationCount;
@@ -42,14 +45,83 @@ namespace NeuralNet.Genetic
             return Population[index];
         }
 
-        public void CreateNewPopulation(float mutationChance, int mutationPower, float crossoverChance, bool findMin = false)
+        public void StartEvolution(int iterations, float[][] testData, float[][] testAnswers, PostIterationEvolutionMethod postIterationEvolutionMethod, bool bestMin = false)
+        {
+            for (int iter = 0; iter < iterations; iter++)
+            {
+                SetRateMSE(testData, testAnswers);
+
+                postIterationEvolutionMethod(iter, GetBest(bestMin:bestMin));
+
+                CreateNewPopulation(0.15f, 1, 0.05f, bestMin: true);
+            }
+        }
+
+        public PopulationUnit GetBest(bool bestMin = false)
+        {
+            Array.Sort(Population);
+
+            if (!bestMin)
+            {
+                return Population[PopulationCount - 1];
+            }
+            else
+            {
+                return Population[0];
+            }
+        }
+
+        public (float, float) GetBestRate(bool bestMin = false)
+        {
+            Array.Sort(Population);
+
+            if (!bestMin)
+            {
+                return (Population[PopulationCount - 1].Rate, Population[PopulationCount - 1].Rate);
+            }
+            else
+            {
+                return (Population[0].Rate, Population[1].Rate);
+            }
+        }
+
+        public void SetRateMSE(float[][] inputs, float[][] answers)
+        {
+            ParallelFor(0, PopulationCount, (int i) => 
+            {
+                PopulationUnit unit = GetPopulationUnit(i);
+
+                float TotalMse = 0;
+
+                for (int testDataCounter = 0; testDataCounter < inputs.Length; testDataCounter++)
+                {
+                    float[] NNOut = unit.NNRun(inputs[testDataCounter]); // получаем выходы нс 
+
+                    float MSE = 0;
+
+                    for (int k = 0; k < NNOut.Length; k++)
+                    {
+                        MSE += (float)Math.Pow(answers[testDataCounter][k] - NNOut[k], 2); //подсчитываем сумму ошибок
+                    }
+
+                    MSE = MSE / NNOut.Length; // делим
+                    TotalMse += MSE;
+                }
+
+                TotalMse /= answers.Length;
+
+                unit.Rate = TotalMse;
+            });
+        }
+
+        public void CreateNewPopulation(float mutationChance, int mutationPower, float crossoverChance, bool bestMin = false)
         {
             PopulationUnit best1;
             PopulationUnit best2;
 
             Array.Sort(Population);
 
-            if (!findMin)
+            if (!bestMin)
             {
                 best1 = (PopulationUnit)Population[PopulationCount - 1].Clone();
                 best2 = (PopulationUnit)Population[PopulationCount - 2].Clone();
@@ -120,6 +192,28 @@ namespace NeuralNet.Genetic
 
             Population[0] = best1;
             Population[1] = best2;
+        }
+
+        public static void ParallelFor(int from, int to, Action<int> body)
+        {
+            // определяемся с количество потоков и размером блока данных для каждого потока
+            int size = to - from;
+            int numProcs = Environment.ProcessorCount;
+            int range = size / numProcs;
+
+            // разбиваем данные, запускаем все потоки и ждём завершения
+            var threads = new List<Thread>(numProcs);
+            for (int p = 0; p < numProcs; p++)
+            {
+                int start = p * range + from;
+                int end = (p == numProcs - 1) ?
+                to : start + range;
+                threads.Add(new Thread(() => {
+                    for (int i = start; i < end; i++) body(i);
+                }));
+            }
+            foreach (var thread in threads) thread.Start();
+            foreach (var thread in threads) thread.Join();
         }
     }
 }

@@ -57,17 +57,13 @@ namespace NeuralNet.Base
 
                     for (int synapse = 0; synapse < layersData[layer - 1]; synapse++)
                     {
-                        do
-                        {
-                            Weights[Weights.Count - 1][neuron].Add(Random.NextFloat(-1, 1));
-                        }
-                        while (Weights[Weights.Count - 1][neuron][synapse] == 0);
+                        Weights[Weights.Count - 1][neuron].Add(Random.NextFloat(-1, 1));
 
                         WeightsDeltas[WeightsDeltas.Count - 1][neuron].Add(0f);
                     }
                 }
             }
-        }  
+        }
 
         public bool CheckDOScheme(float[] DOScheme)
         {

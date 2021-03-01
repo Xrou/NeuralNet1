@@ -7,11 +7,6 @@
             return (var - min) / (max - min);
         }
 
-        public static float Map(float var, float fromMin, float fromMax, float toMin, float toMax)
-        {
-            return (var - fromMin) * (toMax - toMin) / (fromMax - fromMin) + toMin;
-        }
-
         public static float ReverseMinimax(float var, float min, float max)
         {
             /*
@@ -31,6 +26,11 @@
             return x;
         }
 
+        public static float Map(float var, float fromMin, float fromMax, float toMin, float toMax)
+        {
+            return (var - fromMin) * (toMax - toMin) / (fromMax - fromMin) + toMin;
+        }
+
 
         public static void ApplyMinimax(ref float[][] arr, float min, float max)
         {
@@ -39,6 +39,17 @@
                 for (int k = 0; k < arr[i].Length; k++)
                 {
                     arr[i][k] = Minimax(arr[i][k], min, max);
+                }
+            }
+        }
+
+        public static void ApplyReverseMinimax(ref float[][] arr, float min, float max)
+        {
+            for (int i = 0; i < arr.Length; i++)
+            {
+                for (int k = 0; k < arr[i].Length; k++)
+                {
+                    arr[i][k] = ReverseMinimax(arr[i][k], min, max);
                 }
             }
         }

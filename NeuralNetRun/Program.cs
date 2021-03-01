@@ -12,67 +12,37 @@ namespace NeuralNetRun
         static void Main(string[] args)
         {
             PopulationController populationController = new PopulationController
-                (new FeedForwardNNDescriptor(new int[] { 1, 8, 8, 16, 8, 4 }, Activations.ReLU, Activations.DerivedReLU),
+                (new FeedForwardNNDescriptor(new int[] { 5, 16, 16, 16, 16, 16, 2 }, Activations.Sigmoid, Activations.Sigmoid),
                 50);
 
-            //a+2b+3c+4d=30
+            float DataMin = Utils.FindMin(Data.testDataNet, Data.testAnswersNet, Data.learnDataNet, Data.learnAnswersNet);
+            float DataMax = Utils.FindMax(Data.testDataNet, Data.testAnswersNet, Data.learnDataNet, Data.learnAnswersNet);
 
-            for (int iter = 0; iter < 1000; iter++)
+            Normalize.ApplyMinimax(ref Data.learnDataNet, DataMin, DataMax);
+            Normalize.ApplyMinimax(ref Data.learnAnswersNet, DataMin, DataMax);
+            Normalize.ApplyMinimax(ref Data.testDataNet, DataMin, DataMax);
+            Normalize.ApplyMinimax(ref Data.testAnswersNet, DataMin, DataMax);
+            
+            populationController.StartEvolution(10000, Data.learnDataNet, Data.learnAnswersNet,
+            (int iter, PopulationUnit best1) =>
             {
-                Console.WriteLine($"=======================GEN {iter + 1}=======================");
+                Console.WriteLine($"GEN {iter + 1}");
+                Console.WriteLine($"MIN = {best1.Rate}\n");
+            }, bestMin: true);
 
-                float minRes = 30;
 
-                for (int i = 0; i < populationController.PopulationCount; i++)
-                {
-                    var u = populationController.GetPopulationUnit(i);
+            var best = populationController.GetBest(bestMin: true);
+            float[][] o = new float[3][];
 
-                    float[] Outputs = u.NNRun(new float[] { 1 });
+            o[0] = best.NNRun(Data.testDataNet[8]);
+            o[1] = best.NNRun(Data.testDataNet[3]);
+            o[2] = best.NNRun(Data.testDataNet[4]);
 
-                    float result = Outputs[0] + 2 * Outputs[1] + 3 * Outputs[2] + 4 * Outputs[3];
-                    result = Math.Abs(result - 30);
+            Normalize.ApplyReverseMinimax(ref o, DataMin, DataMax);
+            Normalize.ApplyReverseMinimax(ref Data.testDataNet, DataMin, DataMax);
+            Normalize.ApplyReverseMinimax(ref Data.testAnswersNet, DataMin, DataMax);
 
-                    u.Rate = result;
-
-                    if (result < minRes)
-                    {
-                        minRes = result;
-                    }
-
-                    Console.WriteLine(result);
-                }
-
-                Console.WriteLine($"MIN RESULT: {minRes}");
-
-                populationController.CreateNewPopulation(0.01f, 3, 0.15f, findMin: true);
-
-                var u0 = populationController.GetPopulationUnit(0);
-                var u1 = populationController.GetPopulationUnit(1);
-
-                bool weightsIndent = true;
-
-                for (int k = 0; k < u0.NN.Weights.Count; k++)
-                {
-                    for (int j = 0; j < u0.NN.Weights[k].Count; j++)
-                    {
-                        for (int l = 0; l < u0.NN.Weights[k][j].Count; l++)
-                        {
-                            if (u0.NN.Weights[k][j][l] != u1.NN.Weights[k][j][l] && weightsIndent)
-                            {
-                                weightsIndent = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (weightsIndent)
-                {
-                    weightsIndent = false;
-                }
-            }
-
-            Console.ReadLine();
+            best.NN.SaveWeights("MY BEEEEEEEEEEEEEEEEST NN.xml");
         }
     }
 }
