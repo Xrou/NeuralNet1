@@ -18,23 +18,18 @@ namespace NeuralNet.Base
 
         public List<List<float>> Outputs = new List<List<float>>(); // слой, номер нейрона в слое
 
-        private int[] layersData;
-        private Activation activation;
-        private DerivedActivation derivedActivation;
-
         public FeedForwardNN(FeedForwardNNDescriptor descriptor) // layersData - кол-во нейронов в слое, кол-во элементов layersdata = кол-во слоев
         {
-            Descriptor = descriptor;
-            InitNN(descriptor.LayersData, descriptor.Activation, descriptor.DerivedActivation);
+            if (descriptor.LayersData != null)
+            {
+                Descriptor = descriptor;
+                InitNN(descriptor.LayersData);
+            }
         }
 
-        private void InitNN(int[] layersData, Activation activation, DerivedActivation derivedActivation)
+        private void InitNN(int[] layersData)
         {
             Outputs.Add(new List<float>());
-
-            this.activation = activation;
-            this.derivedActivation = derivedActivation;
-            this.layersData = layersData;
 
             for (int i = 0; i < layersData[0]; i++) //добавляем входы как выходы
             {
@@ -89,7 +84,7 @@ namespace NeuralNet.Base
                 Console.WriteLine($"Run: неправильное количество входов. Необходимо: {Weights[0].Count}, получено: {inputs.Length}");
                 return null;
             }
-
+            
             for (int i = 1; i < Outputs.Count; i++) // чистим выходы от предыдущих данных
             {
                 for (int k = 0; k < Outputs[i].Count; k++)
@@ -112,7 +107,7 @@ namespace NeuralNet.Base
                         Outputs[layer + 1][neuron] += Outputs[layer][synapse] * Weights[layer][neuron][synapse];
                     }
 
-                    Outputs[layer + 1][neuron] = activation(Outputs[layer + 1][neuron]);
+                    Outputs[layer + 1][neuron] = Descriptor.GetActivation()(Outputs[layer + 1][neuron]);
                 }
             }
 
@@ -149,7 +144,7 @@ namespace NeuralNet.Base
                         Outputs[layer + 1][neuron] += Outputs[layer][synapse] * Weights[layer][neuron][synapse];
                     }
 
-                    Outputs[layer + 1][neuron] = activation(Outputs[layer + 1][neuron]);
+                    Outputs[layer + 1][neuron] = Descriptor.GetActivation()(Outputs[layer + 1][neuron]);
                 }
             }
 
@@ -169,23 +164,73 @@ namespace NeuralNet.Base
 
         public void SaveWeights(string fn)
         {
+            string fn1;
+            string fn2;
+
+            if (fn.EndsWith(".xml"))
+            {
+                fn1 = fn.Substring(0, fn.Length - 4);
+                fn1 += " w.xml";
+
+                fn2 = fn.Substring(0, fn.Length - 4);
+                fn2 += " d.xml";
+
+            }
+            else
+            {
+                fn1 = fn + " w.xml";
+                fn2 = fn + " d.xml";
+            }
+
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<List<List<float>>>));
 
-            using (FileStream fs = new FileStream(fn, FileMode.Create))
+            using (FileStream fs = new FileStream(fn1, FileMode.Create))
             {
                 xmlSerializer.Serialize(fs, Weights);
+            }
+
+            xmlSerializer = new XmlSerializer(typeof(FeedForwardNNDescriptor));
+
+            using (FileStream fs = new FileStream(fn2, FileMode.Create))
+            {
+                xmlSerializer.Serialize(fs, Descriptor);
             }
         }
 
         public void ReadWeights(string fn)
         {
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<List<List<float>>>));
+            string fn1;
+            string fn2;
 
-            using (FileStream fs = new FileStream(fn, FileMode.Open))
+            if (fn.EndsWith(".xml"))
+            {
+                fn1 = fn.Substring(0, fn.Length - 4);
+                fn1 += " w.xml";
+
+                fn2 = fn.Substring(0, fn.Length - 4);
+                fn2 += " d.xml";
+            }
+            else
+            {
+                fn1 = fn + " w.xml";
+                fn2 = fn + " d.xml";
+            }
+
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(FeedForwardNNDescriptor));
+
+            using (FileStream fs = new FileStream(fn2, FileMode.Open))
+            {
+                Descriptor = (FeedForwardNNDescriptor)xmlSerializer.Deserialize(fs);
+            }
+
+            InitNN(Descriptor.LayersData);
+
+            xmlSerializer = new XmlSerializer(typeof(List<List<List<float>>>));
+
+            using (FileStream fs = new FileStream(fn1, FileMode.Open))
             {
                 Weights = (List<List<List<float>>>)xmlSerializer.Deserialize(fs);
             }
-
         }
 
         public object Clone()

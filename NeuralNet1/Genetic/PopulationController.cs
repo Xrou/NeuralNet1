@@ -35,9 +35,26 @@ namespace NeuralNet.Genetic
             {
                 Population[i] = new PopulationUnit(new FeedForwardNN(descriptor));
             }
+        }
 
-            Population[22].Rate = 1111;
-            Population[2].Rate = 54564456;
+        public PopulationController(FeedForwardNN nn, int PopulationCount)
+        {
+            if (PopulationCount < 2)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Population count must be more than 2");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+
+            this.PopulationCount = PopulationCount;
+            this.descriptor = nn.Descriptor;
+
+            Population = new PopulationUnit[PopulationCount];
+
+            for (int i = 0; i < PopulationCount; i++)
+            {
+                Population[i] = new PopulationUnit(nn);
+            }
         }
 
         public PopulationUnit GetPopulationUnit(int index)
@@ -45,7 +62,7 @@ namespace NeuralNet.Genetic
             return Population[index];
         }
 
-        public void StartEvolution(int iterations, float[][] testData, float[][] testAnswers, PostIterationEvolutionMethod postIterationEvolutionMethod, bool bestMin = false)
+        public void StartEvolution(int iterations, float mutationChance, int mutationPower, float crossoverChance, float[][] testData, float[][] testAnswers, PostIterationEvolutionMethod postIterationEvolutionMethod, bool bestMin = false)
         {
             for (int iter = 0; iter < iterations; iter++)
             {
@@ -53,7 +70,7 @@ namespace NeuralNet.Genetic
 
                 postIterationEvolutionMethod(iter, GetBest(bestMin:bestMin));
 
-                CreateNewPopulation(0.15f, 1, 0.05f, bestMin: true);
+                CreateNewPopulation(mutationChance, mutationPower, crossoverChance, bestMin: true);
             }
         }
 
@@ -87,7 +104,7 @@ namespace NeuralNet.Genetic
 
         public void SetRateMSE(float[][] inputs, float[][] answers)
         {
-            ParallelFor(0, PopulationCount, (int i) => 
+            Base.Parallel.ParallelFor(0, PopulationCount, (int i) => 
             {
                 PopulationUnit unit = GetPopulationUnit(i);
 
@@ -192,28 +209,6 @@ namespace NeuralNet.Genetic
 
             Population[0] = best1;
             Population[1] = best2;
-        }
-
-        public static void ParallelFor(int from, int to, Action<int> body)
-        {
-            // определяемся с количество потоков и размером блока данных для каждого потока
-            int size = to - from;
-            int numProcs = Environment.ProcessorCount;
-            int range = size / numProcs;
-
-            // разбиваем данные, запускаем все потоки и ждём завершения
-            var threads = new List<Thread>(numProcs);
-            for (int p = 0; p < numProcs; p++)
-            {
-                int start = p * range + from;
-                int end = (p == numProcs - 1) ?
-                to : start + range;
-                threads.Add(new Thread(() => {
-                    for (int i = start; i < end; i++) body(i);
-                }));
-            }
-            foreach (var thread in threads) thread.Start();
-            foreach (var thread in threads) thread.Join();
         }
     }
 }

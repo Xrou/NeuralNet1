@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NeuralNet.Base;
+using NeuralNet.DataSets;
 
 namespace NeuralNet.BackPropogation
 {
@@ -65,7 +66,7 @@ namespace NeuralNet.BackPropogation
 
                         for (int i = 0; i < NNOut.Length; i++)
                         {
-                            deltas[deltas.Count - 1][i] = (learnAnswers[learnDataCounter][i] - NNOut[i]) * NeuralNet.Descriptor.DerivedActivation(NNOut[i]);//параллельно считаем дельты выходных нейронов
+                            deltas[deltas.Count - 1][i] = (learnAnswers[learnDataCounter][i] - NNOut[i]) * NeuralNet.Descriptor.GetDerivedActivation()(NNOut[i]);//параллельно считаем дельты выходных нейронов
                         }
 
                         for (int layer = NeuralNet.Weights.Count - 1; layer >= 0; layer--)
@@ -77,7 +78,7 @@ namespace NeuralNet.BackPropogation
                                     deltas[layer][neuron] = deltas[layer + 1][synapse] * NeuralNet.Weights[layer][synapse][neuron]; // суммируем
                                 }
 
-                                deltas[layer][neuron] *= NeuralNet.Descriptor.DerivedActivation(NeuralNet.Outputs[layer][neuron]); // домножаем на производную
+                                deltas[layer][neuron] *= NeuralNet.Descriptor.GetDerivedActivation()(NeuralNet.Outputs[layer][neuron]); // домножаем на производную
                             }
                         }
 
@@ -96,6 +97,7 @@ namespace NeuralNet.BackPropogation
                             }
                         }
 
+                        Console.WriteLine($"DataCounter = {learnDataCounter}");
                         /*
                         суть подсчета дельт такая:
                         т.к. у нас слоев весов 2(см. 1.jpg), а выходов и дельт всегда на 1 слой больше, так еще и веса у нас на вход, то
@@ -104,7 +106,7 @@ namespace NeuralNet.BackPropogation
                          */
                     }
 
-                    if (iter % 10 == 0 && iter != 0)
+                    if (iter % 10 == 0)
                     {
                         float TotalMse = 0;
 

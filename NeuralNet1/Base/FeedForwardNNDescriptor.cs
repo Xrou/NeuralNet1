@@ -6,17 +6,45 @@ using System.Threading.Tasks;
 
 namespace NeuralNet.Base
 {
+    [Serializable]
     public class FeedForwardNNDescriptor
     {
-        public int[] LayersData { get; }
-        public Activation Activation { get; }
-        public DerivedActivation DerivedActivation { get; }
+        private string activationStr;
+
+        public int[] LayersData;
+        public string Activation
+        {
+            get { return activationStr; }
+            set
+            {
+                activationStr = value;
+                var act = Activations.FromString(activationStr); 
+                activation = act.Item1;
+                derivedActivation = act.Item2;
+            }
+        }
+        private Activation activation;
+        private DerivedActivation derivedActivation;
+
+        public FeedForwardNNDescriptor() { }
 
         public FeedForwardNNDescriptor(int[] LayersData, Activation Activation, DerivedActivation DerivedActivation)
         {
             this.LayersData = LayersData;
-            this.Activation = Activation;
-            this.DerivedActivation = DerivedActivation;
+            this.activation = Activation;
+            this.derivedActivation = DerivedActivation;
+
+            this.Activation = Activations.AsString(Activation);
+        }
+
+        public Activation GetActivation()
+        {
+            return activation;
+        }
+
+        public DerivedActivation GetDerivedActivation()
+        {
+            return derivedActivation;
         }
     }
 }

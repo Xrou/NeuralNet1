@@ -2,7 +2,7 @@
 
 namespace NeuralNet.Base
 {
-    public class Activations
+    public static class Activations
     {
         private const float E = 2.7182818285f;
 
@@ -41,9 +41,37 @@ namespace NeuralNet.Base
             return (float)((Math.Pow(E, x) - Math.Pow(E, -x)) / (Math.Pow(E, x) + Math.Pow(E, -x)));
         }
 
-        static public float DeriverTanh(float x)
+        static public float DerivedTanh(float x)
         {
             return (float)(1 - Math.Pow(Tanh(x), 2));
+        }
+
+        static public string AsString(Activation a)
+        {
+            if (a == Sigmoid)
+                return "Sigmoid";
+
+            else if (a == ReLU)
+                return "ReLU";
+
+            else if (a == Tanh)
+                return "Tanh";
+
+            return "";
+        }
+
+        static public (Activation, DerivedActivation) FromString(string a)
+        {
+            if (a == "Sigmoid")
+                return (Sigmoid, DerivedSigmoid);
+
+            else if (a == "ReLU")
+                return (ReLU, DerivedReLU);
+
+            else if (a == "Tanh")
+                return (Tanh, DerivedTanh);
+
+            return (null, null);
         }
     }
 }

@@ -4,6 +4,8 @@ using NeuralNet.Genetic;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using NeuralNet.DataSets;
+using System.IO;
 
 namespace NeuralNetRun
 {
@@ -11,38 +13,85 @@ namespace NeuralNetRun
     {
         static void Main(string[] args)
         {
-            PopulationController populationController = new PopulationController
-                (new FeedForwardNNDescriptor(new int[] { 5, 16, 16, 16, 16, 16, 2 }, Activations.Sigmoid, Activations.Sigmoid),
-                50);
+            FeedForwardNN nn = new FeedForwardNN(new FeedForwardNNDescriptor());
+            nn.ReadWeights("mnist.xml");
 
-            float DataMin = Utils.FindMin(Data.testDataNet, Data.testAnswersNet, Data.learnDataNet, Data.learnAnswersNet);
-            float DataMax = Utils.FindMax(Data.testDataNet, Data.testAnswersNet, Data.learnDataNet, Data.learnAnswersNet);
+            float[][] testData = new float[10000][];
+            float[][] testAnswers = new float[10000][];
 
-            Normalize.ApplyMinimax(ref Data.learnDataNet, DataMin, DataMax);
-            Normalize.ApplyMinimax(ref Data.learnAnswersNet, DataMin, DataMax);
-            Normalize.ApplyMinimax(ref Data.testDataNet, DataMin, DataMax);
-            Normalize.ApplyMinimax(ref Data.testAnswersNet, DataMin, DataMax);
-            
-            populationController.StartEvolution(10000, Data.learnDataNet, Data.learnAnswersNet,
-            (int iter, PopulationUnit best1) =>
+            int index = 0;
+
+            using (StreamReader sr = new StreamReader(@"C:\Users\Dima\source\repos\NeuralNet1\NeuralNetRun\bin\Debug\mnist_test.csv", System.Text.Encoding.Default))
             {
-                Console.WriteLine($"GEN {iter + 1}");
-                Console.WriteLine($"MIN = {best1.Rate}\n");
-            }, bestMin: true);
+                string line;
 
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] array = line.Split(',');
+                    float[] data = new float[784];
+                    int label = Convert.ToInt32(array[0]);
 
-            var best = populationController.GetBest(bestMin: true);
+                    for (int i = 0; i < 784; i++)
+                    {
+                        data[i] = Normalize.Minimax(Convert.ToInt32(array[i + 1]), 0, 255);
+                    }
+
+                    float[] answer = new float[10];
+                    answer[label] = 1;
+
+                    testData[index] = data;
+                    testAnswers[index] = answer;
+                    index++;
+                }
+            }
+
+            Trainer trainer = new Trainer(ref nn);
+
+            trainer.TrainBackPropogation(1, 1, 0.0001f, 0.3f, testData, new float[][] { }, testAnswers, new float[][] { });
+
             float[][] o = new float[3][];
 
-            o[0] = best.NNRun(Data.testDataNet[8]);
-            o[1] = best.NNRun(Data.testDataNet[3]);
-            o[2] = best.NNRun(Data.testDataNet[4]);
+            o[0] = nn.Run(testData[0]);
+            o[1] = nn.Run(testData[1]);
+            o[2] = nn.Run(testData[2]);
 
-            Normalize.ApplyReverseMinimax(ref o, DataMin, DataMax);
-            Normalize.ApplyReverseMinimax(ref Data.testDataNet, DataMin, DataMax);
-            Normalize.ApplyReverseMinimax(ref Data.testAnswersNet, DataMin, DataMax);
+            int answer0;
+            int answer1;
+            int answer2;
 
-            best.NN.SaveWeights("MY BEEEEEEEEEEEEEEEEST NN.xml");
+            float max = 0;
+
+            for (int i = 0; i < o[0].Length; i++)
+            {
+                if (o[0][i] > max)
+                {
+                    answer0 = i;
+                    max = o[0][i];
+                }
+            }
+
+            max = 0;
+
+            for (int i = 0; i < o[0].Length; i++)
+            {
+                if (o[1][i] > max)
+                {
+                    answer1 = i;
+                    max = o[1][i];
+                }
+            }
+
+            max = 0;
+
+            for (int i = 0; i < o[0].Length; i++)
+            {
+                if (o[2][i] > max)
+                {
+                    answer2 = i;
+                    max = o[2][i];
+                }
+            }
+
         }
     }
 }
